@@ -24,6 +24,11 @@ knitr_fig_path("01-")
 
 ## Classification vs. Regression
 
+```{r}
+plot(c(1,2,4,7))
+```
+
+
 ## Our Focus
 
 ```{r}
