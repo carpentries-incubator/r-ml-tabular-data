@@ -3,8 +3,8 @@
 # Instead, please edit 01-Intro.md in _episodes_rmd/
 source: Rmd
 title: "A Brief Introduction to Machine Learning"
-teaching: 10
-exercises: 2
+teaching: 15
+exercises: 5
 questions:
 - "What is machine learning?"
 - "What specific tools will this lesson cover?"
@@ -23,26 +23,5 @@ keypoints:
 
 ## Classification vs. Regression
 
-
-~~~
-plot(c(1,2,4,7))
-~~~
-{: .language-r}
-
-<img src="../fig/rmd-01-unnamed-chunk-2-1.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" width="612" style="display: block; margin: auto;" />
-
-
 ## Our Focus
 
-
-~~~
-2 + 3
-~~~
-{: .language-r}
-
-
-
-~~~
-[1] 5
-~~~
-{: .output}
