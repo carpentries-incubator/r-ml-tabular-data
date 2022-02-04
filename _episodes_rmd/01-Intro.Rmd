@@ -1,6 +1,6 @@
 ---
 source: Rmd
-title: "Some Machine Learning Tools for Tabular Data"
+title: "A Brief Introduction to Machine Learning"
 teaching: 10
 exercises: 2
 questions:

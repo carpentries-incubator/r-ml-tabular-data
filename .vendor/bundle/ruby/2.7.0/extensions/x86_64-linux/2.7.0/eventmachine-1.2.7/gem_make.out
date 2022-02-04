@@ -1,87 +1,105 @@
 current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader
-/opt/hostedtoolcache/Ruby/2.7.5/x64/bin/ruby -I /opt/hostedtoolcache/Ruby/2.7.5/x64/lib/ruby/2.7.0 -r ./siteconf20220204-9893-iok4rd.rb extconf.rb
+/opt/hostedtoolcache/Ruby/2.7.5/x64/bin/ruby -I /opt/hostedtoolcache/Ruby/2.7.5/x64/lib/ruby/2.7.0 -r ./siteconf20220204-9876-16ce1lh.rb extconf.rb
 creating Makefile
 
 current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader
 make "DESTDIR=" clean
 make[1]: Entering directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader'
 Makefile:175: warning: overriding recipe for target 'clean'
-0Þ@V:175: warning: ignoring old recipe for target 'clean'
+0.(ýtU:175: warning: ignoring old recipe for target 'clean'
 Makefile:182: warning: overriding recipe for target 'distclean'
-0Þ@V:182: warning: ignoring old recipe for target 'distclean'
+0.(ýtU:182: warning: ignoring old recipe for target 'distclean'
 Makefile:190: warning: overriding recipe for target 'install-so'
-0Þ@V:190: warning: ignoring old recipe for target 'install-so'
+0.(ýtU:190: warning: ignoring old recipe for target 'install-so'
 Makefile:200: warning: overriding recipe for target 'pre-install-rb-default'
-0Þ@V:200: warning: ignoring old recipe for target 'pre-install-rb-default'
+0.(ýtU:200: warning: ignoring old recipe for target 'pre-install-rb-default'
 Makefile:202: warning: overriding recipe for target '.sitearchdir.time'
-0Þ@V:202: warning: ignoring old recipe for target '.sitearchdir.time'
+0.(ýtU:202: warning: ignoring old recipe for target '.sitearchdir.time'
 Makefile:212: warning: overriding recipe for target '.cc.o'
-0Þ@V:212: warning: ignoring old recipe for target '.cc.o'
+0.(ýtU:212: warning: ignoring old recipe for target '.cc.o'
 Makefile:216: warning: overriding recipe for target '.cc.S'
-0Þ@V:216: warning: ignoring old recipe for target '.cc.S'
+0.(ýtU:216: warning: ignoring old recipe for target '.cc.S'
 Makefile:220: warning: overriding recipe for target '.mm.o'
-0Þ@V:220: warning: ignoring old recipe for target '.mm.o'
+0.(ýtU:220: warning: ignoring old recipe for target '.mm.o'
 Makefile:224: warning: overriding recipe for target '.mm.S'
-0Þ@V:224: warning: ignoring old recipe for target '.mm.S'
+0.(ýtU:224: warning: ignoring old recipe for target '.mm.S'
 Makefile:228: warning: overriding recipe for target '.cxx.o'
-0Þ@V:228: warning: ignoring old recipe for target '.cxx.o'
+0.(ýtU:228: warning: ignoring old recipe for target '.cxx.o'
 Makefile:232: warning: overriding recipe for target '.cxx.S'
-0Þ@V:232: warning: ignoring old recipe for target '.cxx.S'
+0.(ýtU:232: warning: ignoring old recipe for target '.cxx.S'
 Makefile:236: warning: overriding recipe for target '.cpp.o'
-0Þ@V:236: warning: ignoring old recipe for target '.cpp.o'
+0.(ýtU:236: warning: ignoring old recipe for target '.cpp.o'
 Makefile:240: warning: overriding recipe for target '.cpp.S'
-0Þ@V:240: warning: ignoring old recipe for target '.cpp.S'
+0.(ýtU:240: warning: ignoring old recipe for target '.cpp.S'
 Makefile:244: warning: overriding recipe for target '.c.o'
-0Þ@V:244: warning: ignoring old recipe for target '.c.o'
+0.(ýtU:244: warning: ignoring old recipe for target '.c.o'
 Makefile:248: warning: overriding recipe for target '.c.S'
-0Þ@V:248: warning: ignoring old recipe for target '.c.S'
+0.(ýtU:248: warning: ignoring old recipe for target '.c.S'
 Makefile:252: warning: overriding recipe for target '.m.o'
-0Þ@V:252: warning: ignoring old recipe for target '.m.o'
+0.(ýtU:252: warning: ignoring old recipe for target '.m.o'
 Makefile:256: warning: overriding recipe for target '.m.S'
-0Þ@V:256: warning: ignoring old recipe for target '.m.S'
+0.(ýtU:256: warning: ignoring old recipe for target '.m.S'
 Makefile:260: warning: overriding recipe for target 'fastfilereaderext.so'
-0Þ@V:260: warning: ignoring old recipe for target 'fastfilereaderext.so'
+0.(ýtU:260: warning: ignoring old recipe for target 'fastfilereaderext.so'
 make[1]: Leaving directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader'
 
 current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader
 make "DESTDIR="
 make[1]: Entering directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader'
 Makefile:175: warning: overriding recipe for target 'clean'
-0®l1cU:175: warning: ignoring old recipe for target 'clean'
+0Þv
+V:175: warning: ignoring old recipe for target 'clean'
 Makefile:182: warning: overriding recipe for target 'distclean'
-0®l1cU:182: warning: ignoring old recipe for target 'distclean'
+0Þv
+V:182: warning: ignoring old recipe for target 'distclean'
 Makefile:190: warning: overriding recipe for target 'install-so'
-0®l1cU:190: warning: ignoring old recipe for target 'install-so'
+0Þv
+V:190: warning: ignoring old recipe for target 'install-so'
 Makefile:200: warning: overriding recipe for target 'pre-install-rb-default'
-0®l1cU:200: warning: ignoring old recipe for target 'pre-install-rb-default'
+0Þv
+V:200: warning: ignoring old recipe for target 'pre-install-rb-default'
 Makefile:202: warning: overriding recipe for target '.sitearchdir.time'
-0®l1cU:202: warning: ignoring old recipe for target '.sitearchdir.time'
+0Þv
+V:202: warning: ignoring old recipe for target '.sitearchdir.time'
 Makefile:212: warning: overriding recipe for target '.cc.o'
-0®l1cU:212: warning: ignoring old recipe for target '.cc.o'
+0Þv
+V:212: warning: ignoring old recipe for target '.cc.o'
 Makefile:216: warning: overriding recipe for target '.cc.S'
-0®l1cU:216: warning: ignoring old recipe for target '.cc.S'
+0Þv
+V:216: warning: ignoring old recipe for target '.cc.S'
 Makefile:220: warning: overriding recipe for target '.mm.o'
-0®l1cU:220: warning: ignoring old recipe for target '.mm.o'
+0Þv
+V:220: warning: ignoring old recipe for target '.mm.o'
 Makefile:224: warning: overriding recipe for target '.mm.S'
-0®l1cU:224: warning: ignoring old recipe for target '.mm.S'
+0Þv
+V:224: warning: ignoring old recipe for target '.mm.S'
 Makefile:228: warning: overriding recipe for target '.cxx.o'
-0®l1cU:228: warning: ignoring old recipe for target '.cxx.o'
+0Þv
+V:228: warning: ignoring old recipe for target '.cxx.o'
 Makefile:232: warning: overriding recipe for target '.cxx.S'
-0®l1cU:232: warning: ignoring old recipe for target '.cxx.S'
+0Þv
+V:232: warning: ignoring old recipe for target '.cxx.S'
 Makefile:236: warning: overriding recipe for target '.cpp.o'
-0®l1cU:236: warning: ignoring old recipe for target '.cpp.o'
+0Þv
+V:236: warning: ignoring old recipe for target '.cpp.o'
 Makefile:240: warning: overriding recipe for target '.cpp.S'
-0®l1cU:240: warning: ignoring old recipe for target '.cpp.S'
+0Þv
+V:240: warning: ignoring old recipe for target '.cpp.S'
 Makefile:244: warning: overriding recipe for target '.c.o'
-0®l1cU:244: warning: ignoring old recipe for target '.c.o'
+0Þv
+V:244: warning: ignoring old recipe for target '.c.o'
 Makefile:248: warning: overriding recipe for target '.c.S'
-0®l1cU:248: warning: ignoring old recipe for target '.c.S'
+0Þv
+V:248: warning: ignoring old recipe for target '.c.S'
 Makefile:252: warning: overriding recipe for target '.m.o'
-0®l1cU:252: warning: ignoring old recipe for target '.m.o'
+0Þv
+V:252: warning: ignoring old recipe for target '.m.o'
 Makefile:256: warning: overriding recipe for target '.m.S'
-0®l1cU:256: warning: ignoring old recipe for target '.m.S'
+0Þv
+V:256: warning: ignoring old recipe for target '.m.S'
 Makefile:260: warning: overriding recipe for target 'fastfilereaderext.so'
-0®l1cU:260: warning: ignoring old recipe for target 'fastfilereaderext.so'
+0Þv
+V:260: warning: ignoring old recipe for target 'fastfilereaderext.so'
 compiling mapper.cpp
 compiling rubymain.cpp
 linking shared-object fastfilereaderext.so
@@ -91,40 +109,40 @@ current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor
 make "DESTDIR=" install
 make[1]: Entering directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader'
 Makefile:175: warning: overriding recipe for target 'clean'
-0N¾ªU:175: warning: ignoring old recipe for target 'clean'
+0>9á“U:175: warning: ignoring old recipe for target 'clean'
 Makefile:182: warning: overriding recipe for target 'distclean'
-0N¾ªU:182: warning: ignoring old recipe for target 'distclean'
+0>9á“U:182: warning: ignoring old recipe for target 'distclean'
 Makefile:190: warning: overriding recipe for target 'install-so'
-0N¾ªU:190: warning: ignoring old recipe for target 'install-so'
+0>9á“U:190: warning: ignoring old recipe for target 'install-so'
 Makefile:200: warning: overriding recipe for target 'pre-install-rb-default'
-0N¾ªU:200: warning: ignoring old recipe for target 'pre-install-rb-default'
+0>9á“U:200: warning: ignoring old recipe for target 'pre-install-rb-default'
 Makefile:202: warning: overriding recipe for target '.sitearchdir.time'
-0N¾ªU:202: warning: ignoring old recipe for target '.sitearchdir.time'
+0>9á“U:202: warning: ignoring old recipe for target '.sitearchdir.time'
 Makefile:212: warning: overriding recipe for target '.cc.o'
-0N¾ªU:212: warning: ignoring old recipe for target '.cc.o'
+0>9á“U:212: warning: ignoring old recipe for target '.cc.o'
 Makefile:216: warning: overriding recipe for target '.cc.S'
-0N¾ªU:216: warning: ignoring old recipe for target '.cc.S'
+0>9á“U:216: warning: ignoring old recipe for target '.cc.S'
 Makefile:220: warning: overriding recipe for target '.mm.o'
-0N¾ªU:220: warning: ignoring old recipe for target '.mm.o'
+0>9á“U:220: warning: ignoring old recipe for target '.mm.o'
 Makefile:224: warning: overriding recipe for target '.mm.S'
-0N¾ªU:224: warning: ignoring old recipe for target '.mm.S'
+0>9á“U:224: warning: ignoring old recipe for target '.mm.S'
 Makefile:228: warning: overriding recipe for target '.cxx.o'
-0N¾ªU:228: warning: ignoring old recipe for target '.cxx.o'
+0>9á“U:228: warning: ignoring old recipe for target '.cxx.o'
 Makefile:232: warning: overriding recipe for target '.cxx.S'
-0N¾ªU:232: warning: ignoring old recipe for target '.cxx.S'
+0>9á“U:232: warning: ignoring old recipe for target '.cxx.S'
 Makefile:236: warning: overriding recipe for target '.cpp.o'
-0N¾ªU:236: warning: ignoring old recipe for target '.cpp.o'
+0>9á“U:236: warning: ignoring old recipe for target '.cpp.o'
 Makefile:240: warning: overriding recipe for target '.cpp.S'
-0N¾ªU:240: warning: ignoring old recipe for target '.cpp.S'
+0>9á“U:240: warning: ignoring old recipe for target '.cpp.S'
 Makefile:244: warning: overriding recipe for target '.c.o'
-0N¾ªU:244: warning: ignoring old recipe for target '.c.o'
+0>9á“U:244: warning: ignoring old recipe for target '.c.o'
 Makefile:248: warning: overriding recipe for target '.c.S'
-0N¾ªU:248: warning: ignoring old recipe for target '.c.S'
+0>9á“U:248: warning: ignoring old recipe for target '.c.S'
 Makefile:252: warning: overriding recipe for target '.m.o'
-0N¾ªU:252: warning: ignoring old recipe for target '.m.o'
+0>9á“U:252: warning: ignoring old recipe for target '.m.o'
 Makefile:256: warning: overriding recipe for target '.m.S'
-0N¾ªU:256: warning: ignoring old recipe for target '.m.S'
+0>9á“U:256: warning: ignoring old recipe for target '.m.S'
 Makefile:260: warning: overriding recipe for target 'fastfilereaderext.so'
-0N¾ªU:260: warning: ignoring old recipe for target 'fastfilereaderext.so'
-/usr/bin/install -c -m 0755 fastfilereaderext.so ./.gem.20220204-9893-vakkzf
+0>9á“U:260: warning: ignoring old recipe for target 'fastfilereaderext.so'
+/usr/bin/install -c -m 0755 fastfilereaderext.so ./.gem.20220204-9876-1wvxicn
 make[1]: Leaving directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/eventmachine-1.2.7/ext/fastfilereader'
