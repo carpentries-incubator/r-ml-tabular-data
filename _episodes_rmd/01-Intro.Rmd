@@ -1,8 +1,8 @@
 ---
 source: Rmd
 title: "A Brief Introduction to Machine Learning"
-teaching: 10
-exercises: 2
+teaching: 15
+exercises: 5
 questions:
 - "What is machine learning?"
 - "What specific tools will this lesson cover?"
@@ -24,13 +24,5 @@ knitr_fig_path("01-")
 
 ## Classification vs. Regression
 
-```{r}
-plot(c(1,2,4,7))
-```
-
-
 ## Our Focus
 
-```{r}
-2 + 3
-```

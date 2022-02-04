@@ -1,0 +1,112 @@
+---
+source: Rmd
+title: "Linear and Logistic Regression"
+teaching: 50
+exercises: 15
+questions:
+- "How can a model make predictions?"
+- "How do we judge the accuracy of predictions?"
+objectives:
+- "Define a linear regression model."
+- "Define a logistic regression model."
+- "Split data into training and testing sets."
+keypoints:
+- "Regression models can make predictions."
+- "Testing sets can be used to measure the accuracy of a model."
+---
+
+```{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("01-")
+```
+
+## Kyphosis Data
+
+```{r}
+library(rpart)
+str(kyphosis)
+```
+
+For a description of this data set, you can view the help menu for `kyphosis`.
+
+```{r eval=FALSE}
+?kyphosis
+```
+
+```{r, message=FALSE, results=FALSE, warning = FALSE}
+library(tidyverse)
+ggplot(kyphosis, aes(x = Number, y = Start)) + geom_point()
+```
+
+> ## Challenge: Number and Start
+>
+> Do you notice a trend in the above scatterplot? In the context of
+> the `kyphosis` data, why would there be such a trend?
+>
+> > ## Solution
+> > 
+> > There appears to be a weak, negative association between
+> > `Number` and `Start`: larger values of `Number` correspond
+> > to smaller values of `Start`. This correspondence makes sense,
+> > because if more vertebrae are involved, the topmost vertebra would
+> > have to be higher up. (The vertebrae are numbered starting from
+> > the top.)
+> > 
+> {: .solution}
+{: .challenge}
+
+
+## Make a training set and a test set
+
+```{r}
+trainSize <- round(0.75 * nrow(kyphosis))
+set.seed(1234) # so we all get the same random sets
+trainIndex <- sample(nrow(kyphosis), trainSize)
+trainDF <- kyphosis[trainIndex, ]
+testDF <- kyphosis[-trainIndex, ]
+```
+
+
+## Linear Regression
+
+```{r}
+model1 <- lm(Start ~ Number, data = trainDF)
+summary(model1)
+```
+
+The predicted `Start` is obtained by multiplying `Number` by `r model1$coefficients[2]` and adding `r model1$coefficients[1]`.
+
+> ## Challenge: Make a prediction
+>
+> Predict the number of the topmost vertebra when the number of
+> vertebrae involved is 6.
+>
+> > ## Solution
+> > 
+> > Six times `r model1$coefficients[2]` plus `r model1$coefficients[1]` 
+> > equals `r 6 * model1$coefficients[2] + model1$coefficients[1]`.
+> > 
+> {: .solution}
+{: .challenge}
+
+## Try the Testing Data Set
+
+How well will our model perform on data that it was not trained on?
+
+```{r}
+predictedStart <- predict(model1, testDF)
+actualStart <- testDF$Start
+errors <- predictedStart - actualStart
+cat(round(errors, 1))
+```
+
+## Logistic Regression
+
+TODO: Density plots
+
+TODO: Logistic model
+
+TODO: accuracy measurement
+
+
+
