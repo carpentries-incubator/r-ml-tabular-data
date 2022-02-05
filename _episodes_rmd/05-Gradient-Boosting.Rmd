@@ -1,0 +1,22 @@
+---
+source: Rmd
+title: "Gradient Boosted Trees"
+teaching: 50 
+exercises: 15
+questions:
+- "What is gradient boosting?"
+- "TODO"
+objectives:
+- "TODO"
+keypoints:
+- "TODO"
+---
+
+```{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("05-")
+```
+
+## Gradient Boosted Trees
+
+TODO: 

@@ -1,0 +1,24 @@
+---
+source: Rmd
+title: "Decision Forests"
+teaching: 50 
+exercises: 15
+questions:
+- "What are decision forests?"
+- "How can we use a decision tree model to make a prediction?"
+- "How do decision forests improve decision tree models?"
+objectives:
+- "Introduce decision forests."
+- "TODO"
+keypoints:
+- "TODO"
+---
+
+```{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("04-")
+```
+
+## Decision Forests
+
+TODO: 
