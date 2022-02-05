@@ -17,7 +17,7 @@ keypoints:
 
 ```{r, include=FALSE}
 source("../bin/chunk-options.R")
-knitr_fig_path("01-")
+knitr_fig_path("02-")
 ```
 
 ## Kyphosis Data
@@ -60,7 +60,7 @@ ggplot(kyphosis, aes(x = Number, y = Start)) + geom_point()
 
 ```{r}
 trainSize <- round(0.75 * nrow(kyphosis))
-set.seed(1234) # so we all get the same random sets
+set.seed(6789) # so we all get the same random sets
 trainIndex <- sample(nrow(kyphosis), trainSize)
 trainDF <- kyphosis[trainIndex, ]
 testDF <- kyphosis[-trainIndex, ]
@@ -74,7 +74,7 @@ model1 <- lm(Start ~ Number, data = trainDF)
 summary(model1)
 ```
 
-The predicted `Start` is obtained by multiplying `Number` by `r model1$coefficients[2]` and adding `r model1$coefficients[1]`.
+The predicted `Start` is obtained by multiplying `Number` by `r round(model1$coefficients[2], 3)` and adding `r round(model1$coefficients[1], 3)`.
 
 > ## Challenge: Make a prediction
 >
@@ -83,8 +83,10 @@ The predicted `Start` is obtained by multiplying `Number` by `r model1$coefficie
 >
 > > ## Solution
 > > 
-> > Six times `r model1$coefficients[2]` plus `r model1$coefficients[1]` 
-> > equals `r 6 * model1$coefficients[2] + model1$coefficients[1]`.
+> > Six times `r round(model1$coefficients[2], 3)` plus 
+> > `r round(model1$coefficients[1], 3)` 
+> > is approximately 
+> > `r round(6 * model1$coefficients[2] + model1$coefficients[1], 2)`.
 > > 
 > {: .solution}
 {: .challenge}
@@ -100,13 +102,67 @@ errors <- predictedStart - actualStart
 cat(round(errors, 1))
 ```
 
+TODO: Explain RMSE
+
+```{r}
+sqrt(mean(errors^2))
+```
+
+> ## Challenge: Mean Absolute Error
+>
+> The *Mean Absolute Error* (MAE) is the average of the absolute values of the
+> errors.  Compute the MAE for the above example.
+>
+> > ## Solution
+> > 
+> > ```{r}
+> > mean(abs(errors))
+> > ```
+> > 
+> {: .solution}
+{: .challenge}
+
 ## Logistic Regression
 
 TODO: Density plots
 
 TODO: Logistic model
 
+```{r}
+model2 <- glm(Kyphosis ~ Age + Number + Start, data = trainDF, family = "binomial")
+```
+
+Shorthand notation:
+
+```{r}
+model2 <- glm(Kyphosis ~ ., data = trainDF, family = "binomial")
+```
+
+```{r}
+predict(model2, testDF, type = "response")
+```
+
+```{r}
+levels(kyphosis$Kyphosis)
+```
+
+```{r}
+predictedKyphosis <- ifelse(predict(model2, testDF, type = "response") < 0.5,
+                            "absent", "present")
+predictedKyphosis
+```
+
 TODO: accuracy measurement
 
+```{r}
+testDF$Kyphosis == predictedKyphosis
+```
 
+```{r}
+accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
+cat("Proportion of correct predictions: ", accuracy, "\n")
+```
 
+TODO: Challenge: Try a different random seed. Does the accuracy stay the same?
+
+TODO: Challenge: Try using multinom from nnet package.

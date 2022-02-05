@@ -1,0 +1,72 @@
+---
+source: Rmd
+title: "Decision Trees"
+teaching: 30 
+exercises: 10
+questions:
+- "What are decision trees?"
+- "How can we use a decision tree model to make a prediction?"
+- "What are some shortcomings of decision tree models?"
+objectives:
+- "Introduce decision trees and recursive partitioning."
+- "Revisit the Kyphosis example using a classification tree."
+- "Introduce the problem of overfitting."
+keypoints:
+- "Training data can give us a decision tree model."
+- "Decision trees are susceptible to overfitting."
+---
+
+```{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("03-")
+```
+
+## Decision Trees
+
+TODO: describe the general idea of a decision tree.
+
+```{r, message=FALSE, results=FALSE, warning=FALSE}
+library(tidyverse)
+trainSize <- round(0.75 * nrow(kyphosis))
+set.seed(6789) # so we all get the same random sets
+trainIndex <- sample(nrow(kyphosis), trainSize)
+trainDF <- kyphosis %>% slice(trainIndex)
+testDF <- kyphosis %>% slice(-trainIndex)
+```
+
+## Recursive Partitioning
+
+TODO: Add exposition
+
+```{r}
+library(rpart)
+treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF)
+par(xpd = TRUE)
+plot(treeModel)
+text(treeModel)
+```
+Left child is yes, right child is no.
+
+
+```{r}
+testDF[1:8,]
+```
+
+```{r}
+predict(treeModel, testDF[1:8,])
+```
+
+## Check Accuracy
+
+TODO: explain
+
+```{r}
+predictedKyphosis <- ifelse(predict(treeModel, testDF)[,1] > 0.5, 
+                            "absent", "present")
+accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
+cat("Proportion of correct predictions: ", accuracy, "\n")
+```
+
+TODO: Challenge: Try some other random seeds. Does the tree change?
+
+TODO: Problem of overfitting; sensitivity to changes in the dataset.
