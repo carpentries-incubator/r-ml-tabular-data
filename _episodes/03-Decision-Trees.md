@@ -27,59 +27,14 @@ TODO: describe the general idea of a decision tree.
 
 ~~~
 library(tidyverse)
+library(rpart)
 trainSize <- round(0.75 * nrow(kyphosis))
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in nrow(kyphosis): object 'kyphosis' not found
-~~~
-{: .error}
-
-
-
-~~~
 set.seed(6789) # so we all get the same random sets
 trainIndex <- sample(nrow(kyphosis), trainSize)
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in nrow(kyphosis): object 'kyphosis' not found
-~~~
-{: .error}
-
-
-
-~~~
 trainDF <- kyphosis %>% slice(trainIndex)
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in slice(., trainIndex): object 'kyphosis' not found
-~~~
-{: .error}
-
-
-
-~~~
 testDF <- kyphosis %>% slice(-trainIndex)
 ~~~
 {: .language-r}
-
-
-
-~~~
-Error in slice(., -trainIndex): object 'kyphosis' not found
-~~~
-{: .error}
 
 ## Recursive Partitioning
 
@@ -87,46 +42,16 @@ TODO: Add exposition
 
 
 ~~~
-library(rpart)
-treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF)
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in is.data.frame(data): object 'trainDF' not found
-~~~
-{: .error}
-
-
-
-~~~
+treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF, 
+                   method = "class",
+                   control = list(cp = 0.01))
 par(xpd = TRUE)
 plot(treeModel)
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in plot(treeModel): object 'treeModel' not found
-~~~
-{: .error}
-
-
-
-~~~
 text(treeModel)
 ~~~
 {: .language-r}
 
-
-
-~~~
-Error in text(treeModel): object 'treeModel' not found
-~~~
-{: .error}
+<img src="../fig/rmd-03-unnamed-chunk-3-1.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" width="612" style="display: block; margin: auto;" />
 Left child is yes, right child is no.
 
 
@@ -139,9 +64,17 @@ testDF[1:8,]
 
 
 ~~~
-Error in eval(expr, envir, enclos): object 'testDF' not found
+  Kyphosis Age Number Start
+1   absent 148      3    16
+2   absent  22      2    16
+3   absent 125      2    11
+4   absent  93      3    16
+5   absent   1      3     9
+6  present  52      5     6
+7   absent  20      6     9
+8   absent 143      9     3
 ~~~
-{: .error}
+{: .output}
 
 
 ~~~
@@ -152,9 +85,17 @@ predict(treeModel, testDF[1:8,])
 
 
 ~~~
-Error in predict(treeModel, testDF[1:8, ]): object 'treeModel' not found
+     absent    present
+1 0.9444444 0.05555556
+2 0.9444444 0.05555556
+3 0.6111111 0.38888889
+4 0.9444444 0.05555556
+5 0.6111111 0.38888889
+6 0.6111111 0.38888889
+7 0.1428571 0.85714286
+8 0.1428571 0.85714286
 ~~~
-{: .error}
+{: .output}
 
 ## Check Accuracy
 
@@ -164,33 +105,7 @@ TODO: explain
 ~~~
 predictedKyphosis <- ifelse(predict(treeModel, testDF)[,1] > 0.5, 
                             "absent", "present")
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in predict(treeModel, testDF): object 'treeModel' not found
-~~~
-{: .error}
-
-
-
-~~~
 accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in eval(expr, envir, enclos): object 'testDF' not found
-~~~
-{: .error}
-
-
-
-~~~
 cat("Proportion of correct predictions: ", accuracy, "\n")
 ~~~
 {: .language-r}
@@ -198,10 +113,14 @@ cat("Proportion of correct predictions: ", accuracy, "\n")
 
 
 ~~~
-Error in cat("Proportion of correct predictions: ", accuracy, "\n"): object 'accuracy' not found
+Proportion of correct predictions:  0.8 
 ~~~
-{: .error}
+{: .output}
 
 TODO: Challenge: Try some other random seeds. Does the tree change?
 
 TODO: Problem of overfitting; sensitivity to changes in the dataset.
+
+TODO: Mushroom data set? parameter tuning?
+
+
