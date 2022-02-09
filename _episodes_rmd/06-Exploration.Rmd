@@ -1,0 +1,25 @@
+---
+source: Rmd
+title: "Summary and Exploration"
+teaching: 15 
+exercises: 50
+questions:
+- "TODO"
+objectives:
+- "TODO"
+keypoints:
+- "TODO"
+---
+
+```{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("05-")
+```
+
+## Summary
+
+TODO: 
+
+## Exploration
+
+TODO: 

@@ -22,3 +22,29 @@ knitr_fig_path("04-")
 ## Decision Forests
 
 TODO: 
+
+## Yeast dataset (UCI)
+
+```{r}
+library(tidyverse)
+library(rpart)
+yeast <- read_csv("https://datahub.io/machine-learning/yeast/r/yeast.csv") %>%
+  mutate(class_protein_localization = as_factor(class_protein_localization))
+ytree <- rpart(class_protein_localization ~ ., data = yeast, method = "class")
+par(xpd = TRUE)
+plot(ytree)
+text(ytree)
+yp <- predict(ytree)
+ypred <- apply(yp, 1, function(r) {names(which.max(r))})
+sum(yeast$class_protein_localization == ypred)/nrow(yeast)
+```
+
+## Now do it with a random forest
+
+```{r}
+library(randomForest)
+yfor <- randomForest(class_protein_localization ~ ., data = yeast)
+ypred2 <- predict(yfor, yeast)
+sum(ypred2 == yeast$class_protein_localization)/nrow(yeast)
+```
+
