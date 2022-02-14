@@ -21,30 +21,138 @@ knitr_fig_path("04-")
 
 ## Decision Forests
 
-TODO: 
+TODO:
 
-## Yeast dataset (UCI)
+## Wine Dataset
+
+For this episode, we will use a data set described in the paper *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
 
 ```{r}
 library(tidyverse)
+library(here)
+wine <- read_csv(here("data", "wine.csv"))
+str(wine)
+ggplot(wine, aes(x = quality)) + geom_histogram(binwidth = 1)
+```
+
+## Red Wine Classification Model
+
+```{r}
+redwineC <- wine %>%
+  slice(1:1599) %>%
+  mutate(grade = as_factor(if_else(quality < 5.5, "bad", "good"))) %>%  
+  select(-quality)
+summary(redwineC$grade)
+```
+
+## Create Training and Test Sets
+
+```{r}
+trainSize <- round(0.80 * nrow(redwineC))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwineC), trainSize)
+trainDF <- redwineC %>% slice(trainIndex)
+testDF <- redwineC %>% slice(-trainIndex)
+```
+
+## Fit a Decision Tree
+
+```{r}
 library(rpart)
-yeast <- read_csv("https://datahub.io/machine-learning/yeast/r/yeast.csv") %>%
-  mutate(class_protein_localization = as_factor(class_protein_localization))
-ytree <- rpart(class_protein_localization ~ ., data = yeast, method = "class")
-par(xpd = TRUE)
-plot(ytree)
-text(ytree)
-yp <- predict(ytree)
-ypred <- apply(yp, 1, function(r) {names(which.max(r))})
-sum(yeast$class_protein_localization == ypred)/nrow(yeast)
+library(rpart.plot)
+rwtree <- rpart(grade ~ ., data = trainDF, method = "class")
+rpart.plot(rwtree)
+```
+
+
+```{r}
+rwp <- predict(rwtree, testDF)
+rwpred <- apply(rwp, 1, function(r) {names(which.max(r))})
+sum(testDF$grade == rwpred)/nrow(testDF)
 ```
 
 ## Now do it with a random forest
 
+
 ```{r}
 library(randomForest)
-yfor <- randomForest(class_protein_localization ~ ., data = yeast)
-ypred2 <- predict(yfor, yeast)
-sum(ypred2 == yeast$class_protein_localization)/nrow(yeast)
+set.seed(4567)
+rwfor <- randomForest(grade ~ ., data = trainDF)
+rwpred2 <- predict(rwfor, testDF)
+sum(testDF$grade == rwpred2)/nrow(testDF)
 ```
+
+
+## Examine our Random Forest
+
+```{r}
+print(rwfor)
+```
+
+## Train on the whole data set
+
+```{r}
+set.seed(567)
+rwforFull <- randomForest(grade ~ ., data = redwineC)
+print(rwforFull)
+```
+
+## Variable Importance
+
+```{r}
+importance(rwforFull)
+```
+
+## Red Wine Regression Model
+
+```{r}
+redwineR <- wine %>% slice(1:1599) 
+trainSize <- round(0.80 * nrow(redwineR))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwineR), trainSize)
+trainDF <- redwineR %>% slice(trainIndex)
+testDF <- redwineR %>% slice(-trainIndex)
+```
+
+## Fit a Decision Tree
+
+When the dependent variable is quantitative, we use the `anova` method to construct a decision tree.
+
+```{r}
+rwtree <- rpart(quality ~ ., data = trainDF, method = "anova")
+rpart.plot(rwtree)
+```
+
+## Decision Tree RMSE
+
+```{r}
+predictedQuality <- predict(rwtree, testDF)
+errors <- predictedQuality - testDF$quality
+dtRMSE <- sqrt(mean(errors^2))
+dtRMSE
+```
+
+## Random Forest Regression Model
+
+
+```{r}
+set.seed(4567)
+rwfor <- randomForest(quality ~ ., data = trainDF)
+print(rwfor)
+importance(rwfor)
+rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
+rfRMSE
+```
+
+## Linear Regression Model
+
+```{r}
+redwine.lm <- lm(quality ~ ., data = trainDF)
+summary(redwine.lm)
+lmRMSE <- sqrt(mean((predict(redwine.lm, testDF) - testDF$quality)^2))
+lmRMSE
+```
+
+Challenge? White wine decision forest regression model
+
 

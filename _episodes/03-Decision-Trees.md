@@ -28,6 +28,7 @@ TODO: describe the general idea of a decision tree.
 ~~~
 library(tidyverse)
 library(rpart)
+library(rpart.plot)
 trainSize <- round(0.75 * nrow(kyphosis))
 set.seed(6789) # so we all get the same random sets
 trainIndex <- sample(nrow(kyphosis), trainSize)
@@ -45,9 +46,7 @@ TODO: Add exposition
 treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF, 
                    method = "class",
                    control = list(cp = 0.01))
-par(xpd = TRUE)
-plot(treeModel)
-text(treeModel)
+rpart.plot(treeModel)
 ~~~
 {: .language-r}
 
@@ -119,8 +118,10 @@ Proportion of correct predictions:  0.8
 
 TODO: Challenge: Try some other random seeds. Does the tree change?
 
+## Overfitting
+
 TODO: Problem of overfitting; sensitivity to changes in the dataset.
 
-TODO: Mushroom data set? parameter tuning?
+
 
 

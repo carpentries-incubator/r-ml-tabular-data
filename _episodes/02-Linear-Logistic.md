@@ -289,14 +289,14 @@ testDF$Kyphosis == predictedKyphosis
 
 ~~~
 accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
-cat("Proportion of correct predictions: ", accuracy, "\n")
+cat("Proportion of correct predictions using testing data: ", accuracy, "\n")
 ~~~
 {: .language-r}
 
 
 
 ~~~
-Proportion of correct predictions:  0.8 
+Proportion of correct predictions using testing data:  0.8 
 ~~~
 {: .output}
 

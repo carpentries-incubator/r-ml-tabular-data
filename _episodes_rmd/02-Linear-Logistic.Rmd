@@ -160,7 +160,7 @@ testDF$Kyphosis == predictedKyphosis
 
 ```{r}
 accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
-cat("Proportion of correct predictions: ", accuracy, "\n")
+cat("Proportion of correct predictions using testing data: ", accuracy, "\n")
 ```
 
 TODO: Challenge: Try a different random seed. Does the accuracy stay the same?

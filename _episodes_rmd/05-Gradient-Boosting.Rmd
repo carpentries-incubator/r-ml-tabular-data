@@ -20,3 +20,26 @@ knitr_fig_path("05-")
 ## Gradient Boosted Trees
 
 TODO: 
+
+
+## Reload the red wine data
+
+```{r}
+library(tidyverse)
+library(here)
+wine <- read_csv(here("data", "wine.csv"))
+redwineR <- wine %>% slice(1:1599) 
+trainSize <- round(0.80 * nrow(redwineR))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwineR), trainSize)
+trainDF <- redwineR %>% slice(trainIndex)
+testDF <- redwineR %>% slice(-trainIndex)
+```
+
+## Regression Model
+
+```{r}
+library(xgboost)
+gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality, nrounds = 200)
+```
+

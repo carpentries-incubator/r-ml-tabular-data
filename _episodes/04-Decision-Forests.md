@@ -20,9 +20,11 @@ keypoints:
 
 ## Decision Forests
 
-TODO: 
+TODO:
 
-## Yeast dataset (UCI)
+## Wine Dataset
+
+For this episode, we will use a data set described in the paper *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
 
 
 ~~~
@@ -59,16 +61,28 @@ library(tidyverse)
 
 
 ~~~
-library(rpart)
-yeast <- read_csv("https://datahub.io/machine-learning/yeast/r/yeast.csv") %>%
-  mutate(class_protein_localization = as_factor(class_protein_localization))
+library(here)
 ~~~
 {: .language-r}
 
 
 
 ~~~
-Rows: 1484 Columns: 9
+here() starts at /home/runner/work/r-ml-tabular-data/r-ml-tabular-data
+~~~
+{: .output}
+
+
+
+~~~
+wine <- read_csv(here("data", "wine.csv"))
+~~~
+{: .language-r}
+
+
+
+~~~
+Rows: 6497 Columns: 12
 ~~~
 {: .output}
 
@@ -77,8 +91,7 @@ Rows: 1484 Columns: 9
 ~~~
 ── Column specification ────────────────────────────────────────────────────────
 Delimiter: ","
-chr (1): class_protein_localization
-dbl (8): mcg, gvh, alm, mit, erl, pox, vac, nuc
+dbl (12): fixed.acidity, volatile.acidity, citric.acid, residual.sugar, chlo...
 
 ℹ Use `spec()` to retrieve the full column specification for this data.
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
@@ -88,30 +101,117 @@ dbl (8): mcg, gvh, alm, mit, erl, pox, vac, nuc
 
 
 ~~~
-ytree <- rpart(class_protein_localization ~ ., data = yeast, method = "class")
-par(xpd = TRUE)
-plot(ytree)
-text(ytree)
+str(wine)
+~~~
+{: .language-r}
+
+
+
+~~~
+spec_tbl_df [6,497 × 12] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+ $ fixed.acidity       : num [1:6497] 7.4 7.8 7.8 11.2 7.4 7.4 7.9 7.3 7.8 7.5 ...
+ $ volatile.acidity    : num [1:6497] 0.7 0.88 0.76 0.28 0.7 0.66 0.6 0.65 0.58 0.5 ...
+ $ citric.acid         : num [1:6497] 0 0 0.04 0.56 0 0 0.06 0 0.02 0.36 ...
+ $ residual.sugar      : num [1:6497] 1.9 2.6 2.3 1.9 1.9 1.8 1.6 1.2 2 6.1 ...
+ $ chlorides           : num [1:6497] 0.076 0.098 0.092 0.075 0.076 0.075 0.069 0.065 0.073 0.071 ...
+ $ free.sulfur.dioxide : num [1:6497] 11 25 15 17 11 13 15 15 9 17 ...
+ $ total.sulfur.dioxide: num [1:6497] 34 67 54 60 34 40 59 21 18 102 ...
+ $ density             : num [1:6497] 0.998 0.997 0.997 0.998 0.998 ...
+ $ pH                  : num [1:6497] 3.51 3.2 3.26 3.16 3.51 3.51 3.3 3.39 3.36 3.35 ...
+ $ sulphates           : num [1:6497] 0.56 0.68 0.65 0.58 0.56 0.56 0.46 0.47 0.57 0.8 ...
+ $ alcohol             : num [1:6497] 9.4 9.8 9.8 9.8 9.4 9.4 9.4 10 9.5 10.5 ...
+ $ quality             : num [1:6497] 5 5 5 6 5 5 5 7 7 5 ...
+ - attr(*, "spec")=
+  .. cols(
+  ..   fixed.acidity = col_double(),
+  ..   volatile.acidity = col_double(),
+  ..   citric.acid = col_double(),
+  ..   residual.sugar = col_double(),
+  ..   chlorides = col_double(),
+  ..   free.sulfur.dioxide = col_double(),
+  ..   total.sulfur.dioxide = col_double(),
+  ..   density = col_double(),
+  ..   pH = col_double(),
+  ..   sulphates = col_double(),
+  ..   alcohol = col_double(),
+  ..   quality = col_double()
+  .. )
+ - attr(*, "problems")=<externalptr> 
+~~~
+{: .output}
+
+
+
+~~~
+ggplot(wine, aes(x = quality)) + geom_histogram(binwidth = 1)
 ~~~
 {: .language-r}
 
 <img src="../fig/rmd-04-unnamed-chunk-2-1.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" width="612" style="display: block; margin: auto;" />
 
+## Red Wine Classification Model
+
+
 ~~~
-yp <- predict(ytree)
-ypred <- apply(yp, 1, function(r) {names(which.max(r))})
-sum(yeast$class_protein_localization == ypred)/nrow(yeast)
+redwineC <- wine %>%
+  slice(1:1599) %>%
+  mutate(grade = as_factor(if_else(quality < 5.5, "bad", "good"))) %>%  
+  select(-quality)
+summary(redwineC$grade)
 ~~~
 {: .language-r}
 
 
 
 ~~~
-[1] 0.6024259
+ bad good 
+ 744  855 
+~~~
+{: .output}
+
+## Create Training and Test Sets
+
+
+~~~
+trainSize <- round(0.80 * nrow(redwineC))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwineC), trainSize)
+trainDF <- redwineC %>% slice(trainIndex)
+testDF <- redwineC %>% slice(-trainIndex)
+~~~
+{: .language-r}
+
+## Fit a Decision Tree
+
+
+~~~
+library(rpart)
+library(rpart.plot)
+rwtree <- rpart(grade ~ ., data = trainDF, method = "class")
+rpart.plot(rwtree)
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-04-unnamed-chunk-5-1.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" width="612" style="display: block; margin: auto;" />
+
+
+
+~~~
+rwp <- predict(rwtree, testDF)
+rwpred <- apply(rwp, 1, function(r) {names(which.max(r))})
+sum(testDF$grade == rwpred)/nrow(testDF)
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 0.696875
 ~~~
 {: .output}
 
 ## Now do it with a random forest
+
 
 
 ~~~
@@ -162,16 +262,269 @@ The following object is masked from 'package:ggplot2':
 
 
 ~~~
-yfor <- randomForest(class_protein_localization ~ ., data = yeast)
-ypred2 <- predict(yfor, yeast)
-sum(ypred2 == yeast$class_protein_localization)/nrow(yeast)
+set.seed(4567)
+rwfor <- randomForest(grade ~ ., data = trainDF)
+rwpred2 <- predict(rwfor, testDF)
+sum(testDF$grade == rwpred2)/nrow(testDF)
 ~~~
 {: .language-r}
 
 
 
 ~~~
-[1] 0.9851752
+[1] 0.821875
 ~~~
 {: .output}
+
+
+## Examine our Random Forest
+
+
+~~~
+print(rwfor)
+~~~
+{: .language-r}
+
+
+
+~~~
+
+Call:
+ randomForest(formula = grade ~ ., data = trainDF) 
+               Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 3
+
+        OOB estimate of  error rate: 19.16%
+Confusion matrix:
+     bad good class.error
+bad  470  119   0.2020374
+good 126  564   0.1826087
+~~~
+{: .output}
+
+## Train on the whole data set
+
+
+~~~
+set.seed(567)
+rwforFull <- randomForest(grade ~ ., data = redwineC)
+print(rwforFull)
+~~~
+{: .language-r}
+
+
+
+~~~
+
+Call:
+ randomForest(formula = grade ~ ., data = redwineC) 
+               Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 3
+
+        OOB estimate of  error rate: 16.64%
+Confusion matrix:
+     bad good class.error
+bad  618  126   0.1693548
+good 140  715   0.1637427
+~~~
+{: .output}
+
+## Variable Importance
+
+
+~~~
+importance(rwforFull)
+~~~
+{: .language-r}
+
+
+
+~~~
+                     MeanDecreaseGini
+fixed.acidity                53.36714
+volatile.acidity             85.98563
+citric.acid                  52.65787
+residual.sugar               44.08492
+chlorides                    59.12602
+free.sulfur.dioxide          47.00822
+total.sulfur.dioxide         80.23087
+density                      71.76048
+pH                           53.40917
+sulphates                   104.83733
+alcohol                     142.50949
+~~~
+{: .output}
+
+## Red Wine Regression Model
+
+
+~~~
+redwineR <- wine %>% slice(1:1599) 
+trainSize <- round(0.80 * nrow(redwineR))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwineR), trainSize)
+trainDF <- redwineR %>% slice(trainIndex)
+testDF <- redwineR %>% slice(-trainIndex)
+~~~
+{: .language-r}
+
+## Fit a Decision Tree
+
+When the dependent variable is quantitative, we use the `anova` method to construct a decision tree.
+
+
+~~~
+rwtree <- rpart(quality ~ ., data = trainDF, method = "anova")
+rpart.plot(rwtree)
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-04-unnamed-chunk-12-1.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" width="612" style="display: block; margin: auto;" />
+
+## Decision Tree RMSE
+
+
+~~~
+predictedQuality <- predict(rwtree, testDF)
+errors <- predictedQuality - testDF$quality
+dtRMSE <- sqrt(mean(errors^2))
+dtRMSE
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 0.6862169
+~~~
+{: .output}
+
+## Random Forest Regression Model
+
+
+
+~~~
+set.seed(4567)
+rwfor <- randomForest(quality ~ ., data = trainDF)
+print(rwfor)
+~~~
+{: .language-r}
+
+
+
+~~~
+
+Call:
+ randomForest(formula = quality ~ ., data = trainDF) 
+               Type of random forest: regression
+                     Number of trees: 500
+No. of variables tried at each split: 3
+
+          Mean of squared residuals: 0.3269279
+                    % Var explained: 49.5
+~~~
+{: .output}
+
+
+
+~~~
+importance(rwfor)
+~~~
+{: .language-r}
+
+
+
+~~~
+                     IncNodePurity
+fixed.acidity             47.95386
+volatile.acidity         103.36878
+citric.acid               52.83630
+residual.sugar            42.08948
+chlorides                 52.91782
+free.sulfur.dioxide       39.40336
+total.sulfur.dioxide      64.97532
+density                   70.79843
+pH                        44.20004
+sulphates                107.31104
+alcohol                  157.09548
+~~~
+{: .output}
+
+
+
+~~~
+rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
+rfRMSE
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 0.5913485
+~~~
+{: .output}
+
+## Linear Regression Model
+
+
+~~~
+redwine.lm <- lm(quality ~ ., data = trainDF)
+summary(redwine.lm)
+~~~
+{: .language-r}
+
+
+
+~~~
+
+Call:
+lm(formula = quality ~ ., data = trainDF)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.68737 -0.36035 -0.03507  0.43456  1.95898 
+
+Coefficients:
+                       Estimate Std. Error t value Pr(>|t|)    
+(Intercept)           9.3242378 23.4596015   0.397   0.6911    
+fixed.acidity         0.0108114  0.0284758   0.380   0.7043    
+volatile.acidity     -1.2144573  0.1320387  -9.198  < 2e-16 ***
+citric.acid          -0.2957551  0.1608745  -1.838   0.0662 .  
+residual.sugar        0.0193480  0.0168430   1.149   0.2509    
+chlorides            -1.8858347  0.4583915  -4.114 4.14e-05 ***
+free.sulfur.dioxide   0.0054883  0.0023783   2.308   0.0212 *  
+total.sulfur.dioxide -0.0034664  0.0007974  -4.347 1.49e-05 ***
+density              -5.0636470 23.9244350  -0.212   0.8324    
+pH                   -0.4331191  0.2065623  -2.097   0.0362 *  
+sulphates             0.9244109  0.1306583   7.075 2.47e-12 ***
+alcohol               0.2886439  0.0293633   9.830  < 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.6385 on 1267 degrees of freedom
+Multiple R-squared:  0.3762,	Adjusted R-squared:  0.3708 
+F-statistic: 69.46 on 11 and 1267 DF,  p-value: < 2.2e-16
+~~~
+{: .output}
+
+
+
+~~~
+lmRMSE <- sqrt(mean((predict(redwine.lm, testDF) - testDF$quality)^2))
+lmRMSE
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 0.6880957
+~~~
+{: .output}
+
+Challenge? White wine decision forest regression model
+
 
