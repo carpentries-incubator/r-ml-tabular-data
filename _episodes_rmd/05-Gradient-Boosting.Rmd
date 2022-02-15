@@ -40,6 +40,51 @@ testDF <- redwineR %>% slice(-trainIndex)
 
 ```{r}
 library(xgboost)
-gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality, nrounds = 200)
+gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality, nrounds = 50)
 ```
 
+```{r}
+pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
+gbRMSE <- sqrt(mean((pQuality - testDF$quality)^2))
+gbRMSE
+```
+
+## More Details on the Training Process
+
+```{r}
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+watch <- list(train = dtrain, test = dtest)
+```
+
+```{r}
+gbm <- xgb.train(data = dtrain, watchlist = watch, nrounds = 50)
+```
+
+```{r}
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+```
+
+
+## Overfitting
+
+The RMSE on the training set is much smaller than the RMSE on the test set, so our model is *overfitting*. 
+
+```{r}
+gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 100,
+               max_depth = 3,
+               eta = 0.03,
+               )
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbm$evaluation_log)
+```
+
+TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak. Possible solution above.
+
+
+TODO: Challenge: Try with white wine data.
