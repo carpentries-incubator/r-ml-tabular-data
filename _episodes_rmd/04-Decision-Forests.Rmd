@@ -2,16 +2,18 @@
 source: Rmd
 title: "Decision Forests"
 teaching: 50 
-exercises: 15
+exercises: 20
 questions:
 - "What are decision forests?"
 - "How can we use a decision tree model to make a prediction?"
 - "How do decision forests improve decision tree models?"
 objectives:
 - "Introduce decision forests."
-- "TODO"
+- "Use decision forests for classification and regression models."
+- "Evaluate the quality of a decision forest model."
 keypoints:
-- "TODO"
+- "Decision forests can make predictions of a categorical or quantitative variable."
+- "Decision forests, with their default settings, work reasonably well."
 ---
 
 ```{r, include=FALSE}
@@ -101,6 +103,9 @@ print(rwforFull)
 
 ```{r}
 importance(rwforFull)
+importance(rwforFull) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(MeanDecreaseGini))
 ```
 
 ## Red Wine Regression Model
@@ -139,12 +144,32 @@ dtRMSE
 set.seed(4567)
 rwfor <- randomForest(quality ~ ., data = trainDF)
 print(rwfor)
-importance(rwfor)
-rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
-rfRMSE
 ```
 
-## Linear Regression Model
+The `% Var explained` term is a "pseudo R-squared", computed as $1 - \text{MSE}/\text{Var}(y)$.
+The mean of squared residuals is based on the errors for the entire training set. Note that it's square root is close to the RMSE we calculated on the test set. 
+
+```{r}
+rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
+rfRMSE
+rfRMSE^2
+```
+
+You can also view the out-of-bag errors. The average OOB MSE is close to the MSE on the training set. So again, you don't really need a train-test split when working with decision forests.
+
+```{r}
+mean(rwfor$mse)
+```
+
+
+```{r}
+importance(rwfor)
+importance(rwfor) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(IncNodePurity))
+```
+
+## Linear Regression Model (Optional)
 
 ```{r}
 redwine.lm <- lm(quality ~ ., data = trainDF)
@@ -153,6 +178,47 @@ lmRMSE <- sqrt(mean((predict(redwine.lm, testDF) - testDF$quality)^2))
 lmRMSE
 ```
 
-Challenge? White wine decision forest regression model
+Challenge: Train a random forest on entire `redwineR` dataset. Do the MSE and pseudo R-squared improve?
+
+Solution:
+
+```{r, eval = FALSE}
+set.seed(4567)
+rwfor <- randomForest(quality ~ ., data = redwineR)
+print(rwfor)
+```
 
 
+Challenge? White wine decision forest regression model (whole dataset). Are the important variables different for ratings of white wine?
+
+Solution:
+
+```{r, eval = FALSE}
+whitewineR <- wine %>% slice(1600:6497) 
+set.seed(4567)
+wwfor <- randomForest(quality ~ ., data = whitewineR)
+print(wwfor)
+importance(wwfor) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(IncNodePurity))
+```
+
+Note: We have correlated variables in this data set. Random forests handle them fairly well.
+
+Challenge: Try increasing `mtry` and `ntree`. Do the results improve?
+
+Solution:
+
+```{r eval=FALSE}
+set.seed(4567)
+wwfor <- randomForest(quality ~ ., data = whitewineR, mtry = 5)
+print(wwfor)
+```
+
+```{r eval=FALSE}
+set.seed(4567)
+wwfor <- randomForest(quality ~ ., data = whitewineR, ntree = 1000)
+print(wwfor)
+```
+
+Neither of the above changes has much of an effect.

@@ -4,16 +4,18 @@
 source: Rmd
 title: "Decision Forests"
 teaching: 50 
-exercises: 15
+exercises: 20
 questions:
 - "What are decision forests?"
 - "How can we use a decision tree model to make a prediction?"
 - "How do decision forests improve decision tree models?"
 objectives:
 - "Introduce decision forests."
-- "TODO"
+- "Use decision forests for classification and regression models."
+- "Evaluate the quality of a decision forest model."
 keypoints:
-- "TODO"
+- "Decision forests can make predictions of a categorical or quantitative variable."
+- "Decision forests, with their default settings, work reasonably well."
 ---
 
 
@@ -357,6 +359,35 @@ alcohol                     142.50949
 ~~~
 {: .output}
 
+
+
+~~~
+importance(rwforFull) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(MeanDecreaseGini))
+~~~
+{: .language-r}
+
+
+
+~~~
+# A tibble: 11 × 2
+   Variable             MeanDecreaseGini
+   <chr>                           <dbl>
+ 1 alcohol                         143. 
+ 2 sulphates                       105. 
+ 3 volatile.acidity                 86.0
+ 4 total.sulfur.dioxide             80.2
+ 5 density                          71.8
+ 6 chlorides                        59.1
+ 7 pH                               53.4
+ 8 fixed.acidity                    53.4
+ 9 citric.acid                      52.7
+10 free.sulfur.dioxide              47.0
+11 residual.sugar                   44.1
+~~~
+{: .output}
+
 ## Red Wine Regression Model
 
 
@@ -427,6 +458,52 @@ No. of variables tried at each split: 3
 ~~~
 {: .output}
 
+The `% Var explained` term is a "pseudo R-squared", computed as $1 - \text{MSE}/\text{Var}(y)$.
+The mean of squared residuals is based on the errors for the entire training set. Note that it's square root is close to the RMSE we calculated on the test set. 
+
+
+~~~
+rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
+rfRMSE
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 0.5913485
+~~~
+{: .output}
+
+
+
+~~~
+rfRMSE^2
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 0.3496931
+~~~
+{: .output}
+
+You can also view the out-of-bag errors. The average OOB MSE is close to the MSE on the training set. So again, you don't really need a train-test split when working with decision forests.
+
+
+~~~
+mean(rwfor$mse)
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 0.3383084
+~~~
+{: .output}
+
 
 
 ~~~
@@ -455,19 +532,33 @@ alcohol                  157.09548
 
 
 ~~~
-rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
-rfRMSE
+importance(rwfor) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(IncNodePurity))
 ~~~
 {: .language-r}
 
 
 
 ~~~
-[1] 0.5913485
+# A tibble: 11 × 2
+   Variable             IncNodePurity
+   <chr>                        <dbl>
+ 1 alcohol                      157. 
+ 2 sulphates                    107. 
+ 3 volatile.acidity             103. 
+ 4 density                       70.8
+ 5 total.sulfur.dioxide          65.0
+ 6 chlorides                     52.9
+ 7 citric.acid                   52.8
+ 8 fixed.acidity                 48.0
+ 9 pH                            44.2
+10 residual.sugar                42.1
+11 free.sulfur.dioxide           39.4
 ~~~
 {: .output}
 
-## Linear Regression Model
+## Linear Regression Model (Optional)
 
 
 ~~~
@@ -525,6 +616,55 @@ lmRMSE
 ~~~
 {: .output}
 
-Challenge? White wine decision forest regression model
+Challenge: Train a random forest on entire `redwineR` dataset. Do the MSE and pseudo R-squared improve?
+
+Solution:
 
 
+~~~
+set.seed(4567)
+rwfor <- randomForest(quality ~ ., data = redwineR)
+print(rwfor)
+~~~
+{: .language-r}
+
+
+Challenge? White wine decision forest regression model (whole dataset). Are the important variables different for ratings of white wine?
+
+Solution:
+
+
+~~~
+whitewineR <- wine %>% slice(1600:6497) 
+set.seed(4567)
+wwfor <- randomForest(quality ~ ., data = whitewineR)
+print(wwfor)
+importance(wwfor) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(IncNodePurity))
+~~~
+{: .language-r}
+
+Note: We have correlated variables in this data set. Random forests handle them fairly well.
+
+Challenge: Try increasing `mtry` and `ntree`. Do the results improve?
+
+Solution:
+
+
+~~~
+set.seed(4567)
+wwfor <- randomForest(quality ~ ., data = whitewineR, mtry = 5)
+print(wwfor)
+~~~
+{: .language-r}
+
+
+~~~
+set.seed(4567)
+wwfor <- randomForest(quality ~ ., data = whitewineR, ntree = 1000)
+print(wwfor)
+~~~
+{: .language-r}
+
+Neither of the above changes has much of an effect.
