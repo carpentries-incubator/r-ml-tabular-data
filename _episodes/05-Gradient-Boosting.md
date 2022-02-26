@@ -26,88 +26,9 @@ TODO:
 
 ~~~
 library(tidyverse)
-~~~
-{: .language-r}
-
-
-
-~~~
-── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
-~~~
-{: .output}
-
-
-
-~~~
-✔ ggplot2 3.3.5     ✔ purrr   0.3.4
-✔ tibble  3.1.6     ✔ dplyr   1.0.8
-✔ tidyr   1.2.0     ✔ stringr 1.4.0
-✔ readr   2.1.2     ✔ forcats 0.5.1
-~~~
-{: .output}
-
-
-
-~~~
-── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-~~~
-{: .output}
-
-
-
-~~~
 library(here)
 ~~~
 {: .language-r}
-
-
-
-~~~
-here() starts at /home/runner/work/r-ml-tabular-data/r-ml-tabular-data
-~~~
-{: .output}
-
-
-
-~~~
-wine <- read_csv(here("data", "wine.csv"))
-~~~
-{: .language-r}
-
-
-
-~~~
-Rows: 6497 Columns: 12
-~~~
-{: .output}
-
-
-
-~~~
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-dbl (12): fixed.acidity, volatile.acidity, citric.acid, residual.sugar, chlo...
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-~~~
-{: .output}
-
-
-
-~~~
-redwineR <- wine %>% slice(1:1599) 
-trainSize <- round(0.80 * nrow(redwineR))
-set.seed(1234) 
-trainIndex <- sample(nrow(redwineR), trainSize)
-trainDF <- redwineR %>% slice(trainIndex)
-testDF <- redwineR %>% slice(-trainIndex)
-~~~
-{: .language-r}
-
-## Regression Model
 
 
 ~~~
@@ -132,6 +53,23 @@ The following object is masked from 'package:dplyr':
 ~~~
 {: .output}
 
+Notice that both `xgboost` and `dplyr` have a function called `slice`. In the following code block, we specify that we want to use the `dplyr` version.
+
+
+~~~
+library(tidyverse)
+library(here)
+wine <- read_csv(here("data", "wine.csv"))
+redwine <- wine %>% dplyr::slice(1:1599) 
+trainSize <- round(0.80 * nrow(redwine))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwine), trainSize)
+trainDF <- redwine %>% dplyr::slice(trainIndex)
+testDF <- redwine %>% dplyr::slice(-trainIndex)
+~~~
+{: .language-r}
+
+## Regression Model
 
 
 ~~~
@@ -290,7 +228,7 @@ gbm$evaluation_log %>%
 ~~~
 {: .language-r}
 
-<img src="../fig/rmd-05-unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" width="612" style="display: block; margin: auto;" />
+<img src="../fig/rmd-05-unnamed-chunk-9-1.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" width="612" style="display: block; margin: auto;" />
 
 
 ## Overfitting
@@ -300,7 +238,7 @@ The RMSE on the training set is much smaller than the RMSE on the test set, so o
 
 ~~~
 gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 100,
+               nrounds = 140,
                max_depth = 3,
                eta = 0.03,
                )
@@ -310,7 +248,7 @@ gbm$evaluation_log %>%
 ~~~
 {: .language-r}
 
-<img src="../fig/rmd-05-unnamed-chunk-8-1.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" width="612" style="display: block; margin: auto;" />
+<img src="../fig/rmd-05-unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" width="612" style="display: block; margin: auto;" />
 
 ~~~
 tail(gbm$evaluation_log)
@@ -321,16 +259,45 @@ tail(gbm$evaluation_log)
 
 ~~~
    iter train_rmse test_rmse
-1:   95   0.636972  0.709072
-2:   96   0.632454  0.705320
-3:   97   0.628133  0.701641
-4:   98   0.623801  0.698088
-5:   99   0.619887  0.695051
-6:  100   0.616225  0.692573
+1:  135   0.552674  0.650107
+2:  136   0.552007  0.649781
+3:  137   0.551449  0.649636
+4:  138   0.550516  0.649335
+5:  139   0.549945  0.649244
+6:  140   0.549213  0.649080
 ~~~
 {: .output}
 
-TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak. Possible solution above.
+TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak max_depth, eta, and nrounds. Possible solution above.
 
 
 TODO: Challenge: Try with white wine data.
+
+
+~~~
+whitewine <- wine %>% dplyr::slice(1600:6497) 
+trainSize <- round(0.80 * nrow(whitewine))
+set.seed(1234) 
+trainIndex <- sample(nrow(whitewine), trainSize)
+trainDF <- whitewine %>% dplyr::slice(trainIndex)
+testDF <- whitewine %>% dplyr::slice(-trainIndex)
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+watch <- list(train = dtrain, test = dtest)
+~~~
+{: .language-r}
+
+
+~~~
+gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+
+               nrounds = 15)0,
+               max_depth = 3,
+               eta = 0.03,
+               )
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbm$evaluation_log)
+~~~
+{: .language-r}

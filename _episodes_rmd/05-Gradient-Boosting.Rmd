@@ -24,22 +24,32 @@ TODO:
 
 ## Reload the red wine data
 
+```{r, message=FALSE, results=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+```
+
 ```{r}
+library(xgboost)
+```
+
+Notice that both `xgboost` and `dplyr` have a function called `slice`. In the following code block, we specify that we want to use the `dplyr` version.
+
+```{r, message=FALSE, results=FALSE, warning=FALSE}
 library(tidyverse)
 library(here)
 wine <- read_csv(here("data", "wine.csv"))
-redwineR <- wine %>% slice(1:1599) 
-trainSize <- round(0.80 * nrow(redwineR))
+redwine <- wine %>% dplyr::slice(1:1599) 
+trainSize <- round(0.80 * nrow(redwine))
 set.seed(1234) 
-trainIndex <- sample(nrow(redwineR), trainSize)
-trainDF <- redwineR %>% slice(trainIndex)
-testDF <- redwineR %>% slice(-trainIndex)
+trainIndex <- sample(nrow(redwine), trainSize)
+trainDF <- redwine %>% dplyr::slice(trainIndex)
+testDF <- redwine %>% dplyr::slice(-trainIndex)
 ```
 
 ## Regression Model
 
 ```{r}
-library(xgboost)
 gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality, nrounds = 50)
 ```
 
@@ -74,7 +84,7 @@ The RMSE on the training set is much smaller than the RMSE on the test set, so o
 
 ```{r}
 gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 100,
+               nrounds = 140,
                max_depth = 3,
                eta = 0.03,
                )
@@ -84,7 +94,32 @@ gbm$evaluation_log %>%
 tail(gbm$evaluation_log)
 ```
 
-TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak. Possible solution above.
+TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak max_depth, eta, and nrounds. Possible solution above.
 
 
 TODO: Challenge: Try with white wine data.
+
+```{r, eval = FALSE}
+whitewine <- wine %>% dplyr::slice(1600:6497) 
+trainSize <- round(0.80 * nrow(whitewine))
+set.seed(1234) 
+trainIndex <- sample(nrow(whitewine), trainSize)
+trainDF <- whitewine %>% dplyr::slice(trainIndex)
+testDF <- whitewine %>% dplyr::slice(-trainIndex)
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+watch <- list(train = dtrain, test = dtest)
+```
+
+```{r, eval = FALSE}
+gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+
+               nrounds = 15)0,
+               max_depth = 3,
+               eta = 0.03,
+               )
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbm$evaluation_log)
+```

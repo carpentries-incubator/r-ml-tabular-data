@@ -26,119 +26,39 @@ TODO:
 
 ## Wine Dataset
 
-For this episode, we will use a data set described in the paper *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
+For this episode, we will use a data set described in the [article](https://doi.org/10.1016/j.dss.2009.05.016) *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
 
 
 ~~~
 library(tidyverse)
-~~~
-{: .language-r}
-
-
-
-~~~
-── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
-~~~
-{: .output}
-
-
-
-~~~
-✔ ggplot2 3.3.5     ✔ purrr   0.3.4
-✔ tibble  3.1.6     ✔ dplyr   1.0.8
-✔ tidyr   1.2.0     ✔ stringr 1.4.0
-✔ readr   2.1.2     ✔ forcats 0.5.1
-~~~
-{: .output}
-
-
-
-~~~
-── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-~~~
-{: .output}
-
-
-
-~~~
 library(here)
-~~~
-{: .language-r}
-
-
-
-~~~
-here() starts at /home/runner/work/r-ml-tabular-data/r-ml-tabular-data
-~~~
-{: .output}
-
-
-
-~~~
 wine <- read_csv(here("data", "wine.csv"))
 ~~~
 {: .language-r}
 
 
-
 ~~~
-Rows: 6497 Columns: 12
-~~~
-{: .output}
-
-
-
-~~~
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-dbl (12): fixed.acidity, volatile.acidity, citric.acid, residual.sugar, chlo...
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-~~~
-{: .output}
-
-
-
-~~~
-str(wine)
+glimpse(wine)
 ~~~
 {: .language-r}
 
 
 
 ~~~
-spec_tbl_df [6,497 × 12] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
- $ fixed.acidity       : num [1:6497] 7.4 7.8 7.8 11.2 7.4 7.4 7.9 7.3 7.8 7.5 ...
- $ volatile.acidity    : num [1:6497] 0.7 0.88 0.76 0.28 0.7 0.66 0.6 0.65 0.58 0.5 ...
- $ citric.acid         : num [1:6497] 0 0 0.04 0.56 0 0 0.06 0 0.02 0.36 ...
- $ residual.sugar      : num [1:6497] 1.9 2.6 2.3 1.9 1.9 1.8 1.6 1.2 2 6.1 ...
- $ chlorides           : num [1:6497] 0.076 0.098 0.092 0.075 0.076 0.075 0.069 0.065 0.073 0.071 ...
- $ free.sulfur.dioxide : num [1:6497] 11 25 15 17 11 13 15 15 9 17 ...
- $ total.sulfur.dioxide: num [1:6497] 34 67 54 60 34 40 59 21 18 102 ...
- $ density             : num [1:6497] 0.998 0.997 0.997 0.998 0.998 ...
- $ pH                  : num [1:6497] 3.51 3.2 3.26 3.16 3.51 3.51 3.3 3.39 3.36 3.35 ...
- $ sulphates           : num [1:6497] 0.56 0.68 0.65 0.58 0.56 0.56 0.46 0.47 0.57 0.8 ...
- $ alcohol             : num [1:6497] 9.4 9.8 9.8 9.8 9.4 9.4 9.4 10 9.5 10.5 ...
- $ quality             : num [1:6497] 5 5 5 6 5 5 5 7 7 5 ...
- - attr(*, "spec")=
-  .. cols(
-  ..   fixed.acidity = col_double(),
-  ..   volatile.acidity = col_double(),
-  ..   citric.acid = col_double(),
-  ..   residual.sugar = col_double(),
-  ..   chlorides = col_double(),
-  ..   free.sulfur.dioxide = col_double(),
-  ..   total.sulfur.dioxide = col_double(),
-  ..   density = col_double(),
-  ..   pH = col_double(),
-  ..   sulphates = col_double(),
-  ..   alcohol = col_double(),
-  ..   quality = col_double()
-  .. )
- - attr(*, "problems")=<externalptr> 
+Rows: 6,497
+Columns: 12
+$ fixed.acidity        <dbl> 7.4, 7.8, 7.8, 11.2, 7.4, 7.4, 7.9, 7.3, 7.8, 7.5…
+$ volatile.acidity     <dbl> 0.700, 0.880, 0.760, 0.280, 0.700, 0.660, 0.600, …
+$ citric.acid          <dbl> 0.00, 0.00, 0.04, 0.56, 0.00, 0.00, 0.06, 0.00, 0…
+$ residual.sugar       <dbl> 1.9, 2.6, 2.3, 1.9, 1.9, 1.8, 1.6, 1.2, 2.0, 6.1,…
+$ chlorides            <dbl> 0.076, 0.098, 0.092, 0.075, 0.076, 0.075, 0.069, …
+$ free.sulfur.dioxide  <dbl> 11, 25, 15, 17, 11, 13, 15, 15, 9, 17, 15, 17, 16…
+$ total.sulfur.dioxide <dbl> 34, 67, 54, 60, 34, 40, 59, 21, 18, 102, 65, 102,…
+$ density              <dbl> 0.9978, 0.9968, 0.9970, 0.9980, 0.9978, 0.9978, 0…
+$ pH                   <dbl> 3.51, 3.20, 3.26, 3.16, 3.51, 3.51, 3.30, 3.39, 3…
+$ sulphates            <dbl> 0.56, 0.68, 0.65, 0.58, 0.56, 0.56, 0.46, 0.47, 0…
+$ alcohol              <dbl> 9.4, 9.8, 9.8, 9.8, 9.4, 9.4, 9.4, 10.0, 9.5, 10.…
+$ quality              <dbl> 5, 5, 5, 6, 5, 5, 5, 7, 7, 5, 5, 5, 5, 5, 5, 5, 7…
 ~~~
 {: .output}
 
@@ -149,7 +69,7 @@ ggplot(wine, aes(x = quality)) + geom_histogram(binwidth = 1)
 ~~~
 {: .language-r}
 
-<img src="../fig/rmd-04-unnamed-chunk-2-1.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" width="612" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-3-1.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" width="612" style="display: block; margin: auto;" />
 
 ## Red Wine Classification Model
 
@@ -194,7 +114,7 @@ rpart.plot(rwtree)
 ~~~
 {: .language-r}
 
-<img src="../fig/rmd-04-unnamed-chunk-5-1.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" width="612" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-6-1.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" width="612" style="display: block; margin: auto;" />
 
 
 
@@ -412,7 +332,7 @@ rpart.plot(rwtree)
 ~~~
 {: .language-r}
 
-<img src="../fig/rmd-04-unnamed-chunk-12-1.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" width="612" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-13-1.png" title="plot of chunk unnamed-chunk-13" alt="plot of chunk unnamed-chunk-13" width="612" style="display: block; margin: auto;" />
 
 ## Decision Tree RMSE
 
