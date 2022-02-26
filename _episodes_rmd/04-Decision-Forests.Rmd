@@ -27,13 +27,16 @@ TODO:
 
 ## Wine Dataset
 
-For this episode, we will use a data set described in the paper *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
+For this episode, we will use a data set described in the [article](https://doi.org/10.1016/j.dss.2009.05.016) *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
 
-```{r}
+```{r, message=FALSE, results=FALSE, warning=FALSE}
 library(tidyverse)
 library(here)
 wine <- read_csv(here("data", "wine.csv"))
-str(wine)
+```
+
+```{r}
+glimpse(wine)
 ggplot(wine, aes(x = quality)) + geom_histogram(binwidth = 1)
 ```
 
