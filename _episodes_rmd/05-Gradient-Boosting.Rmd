@@ -55,8 +55,17 @@ gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$qual
 
 ```{r}
 pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
-gbRMSE <- sqrt(mean((pQuality - testDF$quality)^2))
+gbErrors <- pQuality - testDF$quality
+gbRMSE <- sqrt(mean(gbErrors^2))
 gbRMSE
+```
+
+```{r}
+tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
 ```
 
 ## More Details on the Training Process
@@ -96,6 +105,16 @@ tail(gbm$evaluation_log)
 
 TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak max_depth, eta, and nrounds. Possible solution above.
 
+```{r}
+pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
+gbErrors <- pQuality - testDF$quality
+tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+```
+
 
 TODO: Challenge: Try with white wine data.
 
@@ -113,10 +132,22 @@ watch <- list(train = dtrain, test = dtest)
 
 ```{r, eval = FALSE}
 gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-
-               nrounds = 15)0,
+               nrounds = 150,
                max_depth = 3,
                eta = 0.03,
+               )
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbm$evaluation_log)
+```
+
+Note: Using linear boosting doesn't improve things.
+
+```{r, eval = FALSE}
+gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+                 booster = "gblinear", eta = 0.02,
+               nrounds = 150
                )
 gbm$evaluation_log %>% 
   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
