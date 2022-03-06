@@ -136,7 +136,8 @@ gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$qual
 
 ~~~
 pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
-gbRMSE <- sqrt(mean((pQuality - testDF$quality)^2))
+gbErrors <- pQuality - testDF$quality
+gbRMSE <- sqrt(mean(gbErrors^2))
 gbRMSE
 ~~~
 {: .language-r}
@@ -147,6 +148,18 @@ gbRMSE
 [1] 0.6489389
 ~~~
 {: .output}
+
+
+~~~
+tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-05-unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" width="612" style="display: block; margin: auto;" />
 
 ## More Details on the Training Process
 
@@ -228,7 +241,7 @@ gbm$evaluation_log %>%
 ~~~
 {: .language-r}
 
-<img src="../fig/rmd-05-unnamed-chunk-9-1.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" width="612" style="display: block; margin: auto;" />
+<img src="../fig/rmd-05-unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" width="612" style="display: block; margin: auto;" />
 
 
 ## Overfitting
@@ -248,7 +261,7 @@ gbm$evaluation_log %>%
 ~~~
 {: .language-r}
 
-<img src="../fig/rmd-05-unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" width="612" style="display: block; margin: auto;" />
+<img src="../fig/rmd-05-unnamed-chunk-11-1.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" width="612" style="display: block; margin: auto;" />
 
 ~~~
 tail(gbm$evaluation_log)
@@ -271,6 +284,20 @@ tail(gbm$evaluation_log)
 TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak max_depth, eta, and nrounds. Possible solution above.
 
 
+~~~
+pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
+gbErrors <- pQuality - testDF$quality
+tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-05-unnamed-chunk-12-1.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" width="612" style="display: block; margin: auto;" />
+
+
 TODO: Challenge: Try with white wine data.
 
 
@@ -290,10 +317,24 @@ watch <- list(train = dtrain, test = dtest)
 
 ~~~
 gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-
-               nrounds = 15)0,
+               nrounds = 150,
                max_depth = 3,
                eta = 0.03,
+               )
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbm$evaluation_log)
+~~~
+{: .language-r}
+
+Note: Using linear boosting doesn't improve things.
+
+
+~~~
+gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+                 booster = "gblinear", eta = 0.02,
+               nrounds = 150
                )
 gbm$evaluation_log %>% 
   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 

@@ -22,3 +22,184 @@ TODO:
 ## Exploration
 
 TODO: 
+
+## Toxicity Prediction
+
+[paper](https://doi.org/10.1021/ci034032s)
+
+
+~~~
+download.file("https://www.openml.org/data/get_csv/52534/topo_2_1.arff", here("data", "topo21.csv"))
+~~~
+{: .language-r}
+
+
+~~~
+library(tidyverse)
+library(here)
+topoInfo <- read_csv(here("data", "topo21.csv")) %>%
+  rename(toxicity = oz267) %>% # toxicity is what we want to predict
+  filter(toxicity > 0.1) # remove outlier
+~~~
+{: .language-r}
+
+## Challenge: Decision forest, and evaluate RMSE
+
+
+~~~
+trainSize <- round(0.80 * nrow(topoInfo))
+set.seed(1234) 
+trainIndex <- sample(nrow(topoInfo), trainSize)
+trainDF <- topoInfo %>% dplyr::slice(trainIndex)
+testDF <- topoInfo %>% dplyr::slice(-trainIndex)
+~~~
+{: .language-r}
+
+
+
+
+~~~
+library(randomForest)
+set.seed(4567)
+toxfor <- randomForest(toxicity ~ ., data = trainDF, mtry = 10) # retrict mtry!
+print(toxfor)
+~~~
+{: .language-r}
+
+
+
+
+
+~~~
+pToxicity <- predict(toxfor, testDF)
+rfErrors <- pToxicity - testDF$toxicity
+tibble(`Predicted Toxicity` = pToxicity, Error = rfErrors) %>%
+  ggplot(aes(x = `Predicted Toxicity`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+
+## Challenge: Gradient Boosted Trees
+
+
+
+~~~
+library(xgboost)
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -toxicity)), label = trainDF$toxicity)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -toxicity)), label = testDF$toxicity)
+watch <- list(train = dtrain, test = dtest)
+~~~
+{: .language-r}
+
+
+~~~
+gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 150,
+               max_depth = 4,
+               eta = 0.04
+               )
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbm$evaluation_log)
+~~~
+{: .language-r}
+
+
+
+
+
+~~~
+pTox <- predict(gbm, as.matrix(select(testDF, -toxicity)))
+gbErrors <- pTox - testDF$toxicity
+tibble(`Predicted Toxicity` = pTox, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Toxicity`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+
+~~~
+importance(toxfor) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(IncNodePurity))
+~~~
+{: .language-r}
+
+
+~~~
+xgb.importance(model = gbm)
+~~~
+{: .language-r}
+
+## Cross Validation and Tuning
+
+
+~~~
+paramList <- list(
+  list(eta = 0.3, max_depth = 6),
+  list(eta = 0.09, max_depth = 4),
+  list(eta = 0.08, max_depth = 4),
+  list(eta = 0.07, max_depth = 4),
+  list(eta = 0.06, max_depth = 4),
+  list(eta = 0.05, max_depth = 4),
+  list(eta = 0.04, max_depth = 4),
+  list(eta = 0.03, max_depth = 4),
+  list(eta = 0.02, max_depth = 4),
+  list(eta = 0.01, max_depth = 4),
+  list(eta = 0.09, max_depth = 2),
+  list(eta = 0.08, max_depth = 2),
+  list(eta = 0.07, max_depth = 2),
+  list(eta = 0.06, max_depth = 2),
+  list(eta = 0.05, max_depth = 2),
+  list(eta = 0.04, max_depth = 2),
+  list(eta = 0.03, max_depth = 2),
+  list(eta = 0.02, max_depth = 2),
+  list(eta = 0.01, max_depth = 2),
+  list(eta = 0.08, max_depth = 4, colsample_bytree = 0.8),
+  list(eta = 0.08, max_depth = 4, subsample = 0.8),
+  list(eta = 0.04, max_depth = 4, subsample = 0.5),
+  list(eta = 0.04, max_depth = 4, subsample = 0.5, colsample_bytree = 0.8)
+)
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  toxCV <- xgb.cv(params = paramList[[i]], 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 5,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+~~~
+{: .language-r}
+
+
+
+~~~
+set.seed(3412)
+paramList <- lapply(1:50, function(i) {
+  list(eta = runif(1, 0.01, 0.3),
+       max_depth = sample(3:10, 1))
+})
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+~~~
+{: .language-r}

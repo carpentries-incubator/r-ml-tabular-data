@@ -116,7 +116,7 @@ importance(rwforFull) %>%
 ```{r}
 redwineR <- wine %>% slice(1:1599) 
 trainSize <- round(0.80 * nrow(redwineR))
-set.seed(1234) 
+set.seed(124) 
 trainIndex <- sample(nrow(redwineR), trainSize)
 trainDF <- redwineR %>% slice(trainIndex)
 testDF <- redwineR %>% slice(-trainIndex)
@@ -134,11 +134,23 @@ rpart.plot(rwtree)
 ## Decision Tree RMSE
 
 ```{r}
-predictedQuality <- predict(rwtree, testDF)
-errors <- predictedQuality - testDF$quality
-dtRMSE <- sqrt(mean(errors^2))
+predQualDT <- predict(rwtree, testDF)
+dtErrors <- predQualDT - testDF$quality
+dtRMSE <- sqrt(mean(dtErrors^2))
 dtRMSE
 ```
+
+## Plot Residuals vs. Fitted
+
+```{r}
+tibble(`Predicted Quality` = predQualDT, Error = dtErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_jitter(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+```
+
+
 
 ## Random Forest Regression Model
 
@@ -153,7 +165,9 @@ The `% Var explained` term is a "pseudo R-squared", computed as $1 - \text{MSE}/
 The mean of squared residuals is based on the errors for the entire training set. Note that it's square root is close to the RMSE we calculated on the test set. 
 
 ```{r}
-rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
+predQualRF <- predict(rwfor, testDF) 
+rfErrors <- predQualRF - testDF$quality
+rfRMSE <- sqrt(mean(rfErrors^2))
 rfRMSE
 rfRMSE^2
 ```
@@ -164,6 +178,17 @@ You can also view the out-of-bag errors. The average OOB MSE is close to the MSE
 mean(rwfor$mse)
 ```
 
+### Plot the errors
+
+```{r}
+tibble(`Predicted Quality` = predQualRF, Error = rfErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_jitter(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+```
+
+## Variable Importance
 
 ```{r}
 importance(rwfor)

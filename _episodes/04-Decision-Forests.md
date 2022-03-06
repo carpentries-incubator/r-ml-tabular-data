@@ -314,7 +314,7 @@ importance(rwforFull) %>%
 ~~~
 redwineR <- wine %>% slice(1:1599) 
 trainSize <- round(0.80 * nrow(redwineR))
-set.seed(1234) 
+set.seed(124) 
 trainIndex <- sample(nrow(redwineR), trainSize)
 trainDF <- redwineR %>% slice(trainIndex)
 testDF <- redwineR %>% slice(-trainIndex)
@@ -338,9 +338,9 @@ rpart.plot(rwtree)
 
 
 ~~~
-predictedQuality <- predict(rwtree, testDF)
-errors <- predictedQuality - testDF$quality
-dtRMSE <- sqrt(mean(errors^2))
+predQualDT <- predict(rwtree, testDF)
+dtErrors <- predQualDT - testDF$quality
+dtRMSE <- sqrt(mean(dtErrors^2))
 dtRMSE
 ~~~
 {: .language-r}
@@ -348,9 +348,25 @@ dtRMSE
 
 
 ~~~
-[1] 0.6862169
+[1] 0.6750109
 ~~~
 {: .output}
+
+## Plot Residuals vs. Fitted
+
+
+~~~
+tibble(`Predicted Quality` = predQualDT, Error = dtErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_jitter(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-04-unnamed-chunk-15-1.png" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" width="612" style="display: block; margin: auto;" />
+
+
 
 ## Random Forest Regression Model
 
@@ -373,8 +389,8 @@ Call:
                      Number of trees: 500
 No. of variables tried at each split: 3
 
-          Mean of squared residuals: 0.3269279
-                    % Var explained: 49.5
+          Mean of squared residuals: 0.33194
+                    % Var explained: 49.77
 ~~~
 {: .output}
 
@@ -383,7 +399,9 @@ The mean of squared residuals is based on the errors for the entire training set
 
 
 ~~~
-rfRMSE <- sqrt(mean((predict(rwfor, testDF) - testDF$quality)^2))
+predQualRF <- predict(rwfor, testDF) 
+rfErrors <- predQualRF - testDF$quality
+rfRMSE <- sqrt(mean(rfErrors^2))
 rfRMSE
 ~~~
 {: .language-r}
@@ -391,7 +409,7 @@ rfRMSE
 
 
 ~~~
-[1] 0.5913485
+[1] 0.5759838
 ~~~
 {: .output}
 
@@ -405,7 +423,7 @@ rfRMSE^2
 
 
 ~~~
-[1] 0.3496931
+[1] 0.3317574
 ~~~
 {: .output}
 
@@ -420,10 +438,25 @@ mean(rwfor$mse)
 
 
 ~~~
-[1] 0.3383084
+[1] 0.3399423
 ~~~
 {: .output}
 
+### Plot the errors
+
+
+~~~
+tibble(`Predicted Quality` = predQualRF, Error = rfErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_jitter(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-04-unnamed-chunk-19-1.png" title="plot of chunk unnamed-chunk-19" alt="plot of chunk unnamed-chunk-19" width="612" style="display: block; margin: auto;" />
+
+## Variable Importance
 
 
 ~~~
@@ -435,17 +468,17 @@ importance(rwfor)
 
 ~~~
                      IncNodePurity
-fixed.acidity             47.95386
-volatile.acidity         103.36878
-citric.acid               52.83630
-residual.sugar            42.08948
-chlorides                 52.91782
-free.sulfur.dioxide       39.40336
-total.sulfur.dioxide      64.97532
-density                   70.79843
-pH                        44.20004
-sulphates                107.31104
-alcohol                  157.09548
+fixed.acidity             47.07776
+volatile.acidity         111.03786
+citric.acid               57.41817
+residual.sugar            42.24075
+chlorides                 54.27190
+free.sulfur.dioxide       40.01365
+total.sulfur.dioxide      66.54188
+density                   66.48752
+pH                        45.91699
+sulphates                107.82435
+alcohol                  160.21565
 ~~~
 {: .output}
 
@@ -464,17 +497,17 @@ importance(rwfor) %>%
 # A tibble: 11 × 2
    Variable             IncNodePurity
    <chr>                        <dbl>
- 1 alcohol                      157. 
- 2 sulphates                    107. 
- 3 volatile.acidity             103. 
- 4 density                       70.8
- 5 total.sulfur.dioxide          65.0
- 6 chlorides                     52.9
- 7 citric.acid                   52.8
- 8 fixed.acidity                 48.0
- 9 pH                            44.2
-10 residual.sugar                42.1
-11 free.sulfur.dioxide           39.4
+ 1 alcohol                      160. 
+ 2 volatile.acidity             111. 
+ 3 sulphates                    108. 
+ 4 total.sulfur.dioxide          66.5
+ 5 density                       66.5
+ 6 citric.acid                   57.4
+ 7 chlorides                     54.3
+ 8 fixed.acidity                 47.1
+ 9 pH                            45.9
+10 residual.sugar                42.2
+11 free.sulfur.dioxide           40.0
 ~~~
 {: .output}
 
@@ -496,28 +529,28 @@ lm(formula = quality ~ ., data = trainDF)
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--2.68737 -0.36035 -0.03507  0.43456  1.95898 
+-2.71767 -0.35788 -0.05016  0.42668  2.07145 
 
 Coefficients:
                        Estimate Std. Error t value Pr(>|t|)    
-(Intercept)           9.3242378 23.4596015   0.397   0.6911    
-fixed.acidity         0.0108114  0.0284758   0.380   0.7043    
-volatile.acidity     -1.2144573  0.1320387  -9.198  < 2e-16 ***
-citric.acid          -0.2957551  0.1608745  -1.838   0.0662 .  
-residual.sugar        0.0193480  0.0168430   1.149   0.2509    
-chlorides            -1.8858347  0.4583915  -4.114 4.14e-05 ***
-free.sulfur.dioxide   0.0054883  0.0023783   2.308   0.0212 *  
-total.sulfur.dioxide -0.0034664  0.0007974  -4.347 1.49e-05 ***
-density              -5.0636470 23.9244350  -0.212   0.8324    
-pH                   -0.4331191  0.2065623  -2.097   0.0362 *  
-sulphates             0.9244109  0.1306583   7.075 2.47e-12 ***
-alcohol               0.2886439  0.0293633   9.830  < 2e-16 ***
+(Intercept)           3.542e+01  2.362e+01   1.500 0.133919    
+fixed.acidity         4.808e-02  2.958e-02   1.625 0.104337    
+volatile.acidity     -1.231e+00  1.339e-01  -9.189  < 2e-16 ***
+citric.acid          -2.816e-01  1.627e-01  -1.731 0.083717 .  
+residual.sugar        2.416e-02  1.653e-02   1.461 0.144183    
+chlorides            -1.703e+00  4.528e-01  -3.760 0.000178 ***
+free.sulfur.dioxide   4.446e-03  2.408e-03   1.846 0.065121 .  
+total.sulfur.dioxide -3.208e-03  7.868e-04  -4.077 4.84e-05 ***
+density              -3.151e+01  2.412e+01  -1.306 0.191640    
+pH                   -3.947e-01  2.161e-01  -1.827 0.067999 .  
+sulphates             8.763e-01  1.293e-01   6.776 1.89e-11 ***
+alcohol               2.733e-01  2.937e-02   9.304  < 2e-16 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Residual standard error: 0.6385 on 1267 degrees of freedom
-Multiple R-squared:  0.3762,	Adjusted R-squared:  0.3708 
-F-statistic: 69.46 on 11 and 1267 DF,  p-value: < 2.2e-16
+Residual standard error: 0.6441 on 1267 degrees of freedom
+Multiple R-squared:  0.3782,	Adjusted R-squared:  0.3728 
+F-statistic: 70.07 on 11 and 1267 DF,  p-value: < 2.2e-16
 ~~~
 {: .output}
 
@@ -532,7 +565,7 @@ lmRMSE
 
 
 ~~~
-[1] 0.6880957
+[1] 0.6672557
 ~~~
 {: .output}
 
