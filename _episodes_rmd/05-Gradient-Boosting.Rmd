@@ -36,8 +36,6 @@ library(xgboost)
 Notice that both `xgboost` and `dplyr` have a function called `slice`. In the following code block, we specify that we want to use the `dplyr` version.
 
 ```{r, message=FALSE, results=FALSE, warning=FALSE}
-library(tidyverse)
-library(here)
 wine <- read_csv(here("data", "wine.csv"))
 redwine <- wine %>% dplyr::slice(1:1599) 
 trainSize <- round(0.80 * nrow(redwine))
@@ -47,7 +45,7 @@ trainDF <- redwine %>% dplyr::slice(trainIndex)
 testDF <- redwine %>% dplyr::slice(-trainIndex)
 ```
 
-## Regression Model
+## Gradient Boosted Regression Model
 
 ```{r}
 gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality, nrounds = 50)
