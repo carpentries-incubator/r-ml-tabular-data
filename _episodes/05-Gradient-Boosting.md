@@ -57,8 +57,6 @@ Notice that both `xgboost` and `dplyr` have a function called `slice`. In the fo
 
 
 ~~~
-library(tidyverse)
-library(here)
 wine <- read_csv(here("data", "wine.csv"))
 redwine <- wine %>% dplyr::slice(1:1599) 
 trainSize <- round(0.80 * nrow(redwine))
@@ -69,7 +67,7 @@ testDF <- redwine %>% dplyr::slice(-trainIndex)
 ~~~
 {: .language-r}
 
-## Regression Model
+## Gradient Boosted Regression Model
 
 
 ~~~

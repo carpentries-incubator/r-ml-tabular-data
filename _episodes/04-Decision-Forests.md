@@ -582,21 +582,50 @@ print(rwfor)
 {: .language-r}
 
 
-Challenge? White wine decision forest regression model (whole dataset). Are the important variables different for ratings of white wine?
+Challenge? White wine decision forest regression model (whole dataset). Are the important variables different for ratings of white wine? also try with just train and test.
 
 Solution:
 
+Using train/test sets:
+
 
 ~~~
-whitewineR <- wine %>% slice(1600:6497) 
+whitewine <- wine %>% slice(1600:6497) 
+trainSize <- round(0.80 * nrow(whitewine))
+set.seed(1234) 
+trainIndex <- sample(nrow(whitewine), trainSize)
+trainDF <- whitewine %>% dplyr::slice(trainIndex)
+testDF <- whitewine %>% dplyr::slice(-trainIndex)
+wwfor <- randomForest(quality ~ ., data = trainDF)
+predQualRF <- predict(wwfor, testDF) 
+rfErrors <- predQualRF - testDF$quality
+rfRMSE <- sqrt(mean(rfErrors^2))
+~~~
+{: .language-r}
+
+random forest rmse: 0.631
+
+
+~~~
 set.seed(4567)
-wwfor <- randomForest(quality ~ ., data = whitewineR)
-print(wwfor)
-importance(wwfor) %>% 
+wwforFull <- randomForest(quality ~ ., data = whitewine)
+print(wwforFull)
+importance(wwforFull) %>% 
   as_tibble(rownames = "Variable") %>% 
   arrange(desc(IncNodePurity))
 ~~~
 {: .language-r}
+
+For comparison: linear model:
+
+
+~~~
+whitewine.lm <- lm(quality ~ ., data = trainDF)
+lmRMSE <- sqrt(mean((predict(whitewine.lm, testDF) - testDF$quality)^2))
+~~~
+{: .language-r}
+
+linear model rmse: 0.7942
 
 Note: We have correlated variables in this data set. Random forests handle them fairly well.
 

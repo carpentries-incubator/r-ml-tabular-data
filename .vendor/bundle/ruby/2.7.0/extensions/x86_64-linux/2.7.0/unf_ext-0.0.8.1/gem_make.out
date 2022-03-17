@@ -1,0 +1,130 @@
+current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext
+/opt/hostedtoolcache/Ruby/2.7.5/x64/bin/ruby -I /opt/hostedtoolcache/Ruby/2.7.5/x64/lib/ruby/2.7.0 -r ./siteconf20220317-13340-14gbfb7.rb extconf.rb
+checking for -lstdc++... yes
+creating Makefile
+
+current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext
+make "DESTDIR=" clean
+make[1]: Entering directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext'
+Makefile:175: warning: overriding recipe for target 'clean'
+`>¹8©U:175: warning: ignoring old recipe for target 'clean'
+Makefile:182: warning: overriding recipe for target 'distclean'
+`>¹8©U:182: warning: ignoring old recipe for target 'distclean'
+Makefile:190: warning: overriding recipe for target 'install-so'
+`>¹8©U:190: warning: ignoring old recipe for target 'install-so'
+Makefile:200: warning: overriding recipe for target 'pre-install-rb-default'
+`>¹8©U:200: warning: ignoring old recipe for target 'pre-install-rb-default'
+Makefile:202: warning: overriding recipe for target '.sitearchdir.time'
+`>¹8©U:202: warning: ignoring old recipe for target '.sitearchdir.time'
+Makefile:212: warning: overriding recipe for target '.cc.o'
+`>¹8©U:212: warning: ignoring old recipe for target '.cc.o'
+Makefile:216: warning: overriding recipe for target '.cc.S'
+`>¹8©U:216: warning: ignoring old recipe for target '.cc.S'
+Makefile:220: warning: overriding recipe for target '.mm.o'
+`>¹8©U:220: warning: ignoring old recipe for target '.mm.o'
+Makefile:224: warning: overriding recipe for target '.mm.S'
+`>¹8©U:224: warning: ignoring old recipe for target '.mm.S'
+Makefile:228: warning: overriding recipe for target '.cxx.o'
+`>¹8©U:228: warning: ignoring old recipe for target '.cxx.o'
+Makefile:232: warning: overriding recipe for target '.cxx.S'
+`>¹8©U:232: warning: ignoring old recipe for target '.cxx.S'
+Makefile:236: warning: overriding recipe for target '.cpp.o'
+`>¹8©U:236: warning: ignoring old recipe for target '.cpp.o'
+Makefile:240: warning: overriding recipe for target '.cpp.S'
+`>¹8©U:240: warning: ignoring old recipe for target '.cpp.S'
+Makefile:244: warning: overriding recipe for target '.c.o'
+`>¹8©U:244: warning: ignoring old recipe for target '.c.o'
+Makefile:248: warning: overriding recipe for target '.c.S'
+`>¹8©U:248: warning: ignoring old recipe for target '.c.S'
+Makefile:252: warning: overriding recipe for target '.m.o'
+`>¹8©U:252: warning: ignoring old recipe for target '.m.o'
+Makefile:256: warning: overriding recipe for target '.m.S'
+`>¹8©U:256: warning: ignoring old recipe for target '.m.S'
+Makefile:260: warning: overriding recipe for target 'unf_ext.so'
+`>¹8©U:260: warning: ignoring old recipe for target 'unf_ext.so'
+make[1]: Leaving directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext'
+
+current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext
+make "DESTDIR="
+make[1]: Entering directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext'
+Makefile:175: warning: overriding recipe for target 'clean'
+`½rU:175: warning: ignoring old recipe for target 'clean'
+Makefile:182: warning: overriding recipe for target 'distclean'
+`½rU:182: warning: ignoring old recipe for target 'distclean'
+Makefile:190: warning: overriding recipe for target 'install-so'
+`½rU:190: warning: ignoring old recipe for target 'install-so'
+Makefile:200: warning: overriding recipe for target 'pre-install-rb-default'
+`½rU:200: warning: ignoring old recipe for target 'pre-install-rb-default'
+Makefile:202: warning: overriding recipe for target '.sitearchdir.time'
+`½rU:202: warning: ignoring old recipe for target '.sitearchdir.time'
+Makefile:212: warning: overriding recipe for target '.cc.o'
+`½rU:212: warning: ignoring old recipe for target '.cc.o'
+Makefile:216: warning: overriding recipe for target '.cc.S'
+`½rU:216: warning: ignoring old recipe for target '.cc.S'
+Makefile:220: warning: overriding recipe for target '.mm.o'
+`½rU:220: warning: ignoring old recipe for target '.mm.o'
+Makefile:224: warning: overriding recipe for target '.mm.S'
+`½rU:224: warning: ignoring old recipe for target '.mm.S'
+Makefile:228: warning: overriding recipe for target '.cxx.o'
+`½rU:228: warning: ignoring old recipe for target '.cxx.o'
+Makefile:232: warning: overriding recipe for target '.cxx.S'
+`½rU:232: warning: ignoring old recipe for target '.cxx.S'
+Makefile:236: warning: overriding recipe for target '.cpp.o'
+`½rU:236: warning: ignoring old recipe for target '.cpp.o'
+Makefile:240: warning: overriding recipe for target '.cpp.S'
+`½rU:240: warning: ignoring old recipe for target '.cpp.S'
+Makefile:244: warning: overriding recipe for target '.c.o'
+`½rU:244: warning: ignoring old recipe for target '.c.o'
+Makefile:248: warning: overriding recipe for target '.c.S'
+`½rU:248: warning: ignoring old recipe for target '.c.S'
+Makefile:252: warning: overriding recipe for target '.m.o'
+`½rU:252: warning: ignoring old recipe for target '.m.o'
+Makefile:256: warning: overriding recipe for target '.m.S'
+`½rU:256: warning: ignoring old recipe for target '.m.S'
+Makefile:260: warning: overriding recipe for target 'unf_ext.so'
+`½rU:260: warning: ignoring old recipe for target 'unf_ext.so'
+compiling unf.cc
+linking shared-object unf_ext.so
+make[1]: Leaving directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext'
+
+current directory: /home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext
+make "DESTDIR=" install
+make[1]: Entering directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext'
+Makefile:175: warning: overriding recipe for target 'clean'
+`>éq*V:175: warning: ignoring old recipe for target 'clean'
+Makefile:182: warning: overriding recipe for target 'distclean'
+`>éq*V:182: warning: ignoring old recipe for target 'distclean'
+Makefile:190: warning: overriding recipe for target 'install-so'
+`>éq*V:190: warning: ignoring old recipe for target 'install-so'
+Makefile:200: warning: overriding recipe for target 'pre-install-rb-default'
+`>éq*V:200: warning: ignoring old recipe for target 'pre-install-rb-default'
+Makefile:202: warning: overriding recipe for target '.sitearchdir.time'
+`>éq*V:202: warning: ignoring old recipe for target '.sitearchdir.time'
+Makefile:212: warning: overriding recipe for target '.cc.o'
+`>éq*V:212: warning: ignoring old recipe for target '.cc.o'
+Makefile:216: warning: overriding recipe for target '.cc.S'
+`>éq*V:216: warning: ignoring old recipe for target '.cc.S'
+Makefile:220: warning: overriding recipe for target '.mm.o'
+`>éq*V:220: warning: ignoring old recipe for target '.mm.o'
+Makefile:224: warning: overriding recipe for target '.mm.S'
+`>éq*V:224: warning: ignoring old recipe for target '.mm.S'
+Makefile:228: warning: overriding recipe for target '.cxx.o'
+`>éq*V:228: warning: ignoring old recipe for target '.cxx.o'
+Makefile:232: warning: overriding recipe for target '.cxx.S'
+`>éq*V:232: warning: ignoring old recipe for target '.cxx.S'
+Makefile:236: warning: overriding recipe for target '.cpp.o'
+`>éq*V:236: warning: ignoring old recipe for target '.cpp.o'
+Makefile:240: warning: overriding recipe for target '.cpp.S'
+`>éq*V:240: warning: ignoring old recipe for target '.cpp.S'
+Makefile:244: warning: overriding recipe for target '.c.o'
+`>éq*V:244: warning: ignoring old recipe for target '.c.o'
+Makefile:248: warning: overriding recipe for target '.c.S'
+`>éq*V:248: warning: ignoring old recipe for target '.c.S'
+Makefile:252: warning: overriding recipe for target '.m.o'
+`>éq*V:252: warning: ignoring old recipe for target '.m.o'
+Makefile:256: warning: overriding recipe for target '.m.S'
+`>éq*V:256: warning: ignoring old recipe for target '.m.S'
+Makefile:260: warning: overriding recipe for target 'unf_ext.so'
+`>éq*V:260: warning: ignoring old recipe for target 'unf_ext.so'
+/usr/bin/install -c -m 0755 unf_ext.so ./.gem.20220317-13340-y42tf1
+make[1]: Leaving directory '/home/runner/work/r-ml-tabular-data/r-ml-tabular-data/.vendor/bundle/ruby/2.7.0/gems/unf_ext-0.0.8.1/ext/unf_ext'

@@ -94,49 +94,6 @@ watch <- list(train = dtrain, test = dtest)
 ~~~
 {: .language-r}
 
-
-~~~
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 150,
-               max_depth = 4,
-               eta = 0.04
-               )
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbm$evaluation_log)
-~~~
-{: .language-r}
-
-
-
-
-
-~~~
-pTox <- predict(gbm, as.matrix(select(testDF, -toxicity)))
-gbErrors <- pTox - testDF$toxicity
-tibble(`Predicted Toxicity` = pTox, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Toxicity`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-~~~
-{: .language-r}
-
-
-~~~
-importance(toxfor) %>% 
-  as_tibble(rownames = "Variable") %>% 
-  arrange(desc(IncNodePurity))
-~~~
-{: .language-r}
-
-
-~~~
-xgb.importance(model = gbm)
-~~~
-{: .language-r}
-
 ## Cross Validation and Tuning
 
 
@@ -203,3 +160,647 @@ for(i in seq(length(paramList))) {
 }
 ~~~
 {: .language-r}
+
+
+~~~
+set.seed(3412)
+paramList <- lapply(1:50, function(i) {
+  list(eta = runif(1, 0.01, 0.3),
+       gamma = runif(1, 0, 0.2))
+})
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+~~~
+{: .language-r}
+
+## First, select a value of eta
+
+Choose values of eta and nrounds taking into account performance/time tradeoff, and
+stick with this choice.
+
+
+~~~
+paramList <- lapply(0:50, function(i) {
+   list(eta = 0.001 + i/50 * 0.4)
+})
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+~~~
+{: .language-r}
+
+Let's use a learning rate of 0.1 for parameter tuning (nrounds around 56). Once we have selected the parameters, we will use a learning rate of 0.03 for training (nrounds 208..293). 
+
+## Grid search
+
+
+~~~
+paramGrid <- expand.grid(
+  max_depth = 4:12,
+  gamma = seq(0, 0.4, length.out = 10)
+)
+paramList <- lapply(1:nrow(paramGrid), function(i) {
+  list(max_depth = paramGrid$max_depth[i],
+       gamma = paramGrid$gamma[i])
+})
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  cat("Testing case ", i, " out of ", length(paramList), ".\n")
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                             tree_method = "approx"), 
+                  data = dtrain, 
+                  nrounds = 100, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+depth_gamma <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+
+
+~~~
+paramGrid <- expand.grid(
+  max_depth = 12,
+  gamma = seq(0, 0.02, length.out = 10)
+)
+paramList <- lapply(1:nrow(paramGrid), function(i) {
+  list(max_depth = paramGrid$max_depth[i],
+       gamma = paramGrid$gamma[i])
+})
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  cat("Testing case ", i, " out of ", length(paramList), ".\n")
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                             tree_method = "approx"), 
+                  data = dtrain, 
+                  nrounds = 100, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+depth_gamma2 <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+Best: 
+gamma = 0, depth = 5, 4, 6
+gamma = .004, depth = 12?
+
+Next: try adding some randomness?
+
+
+~~~
+set.seed(3444)
+paramGrid <- expand.grid(
+  subsample = seq(0.5, 1, by = 0.1),
+  colsample_bytree = seq(0.5, 1, by = 0.1)
+)
+paramList <- lapply(1:nrow(paramGrid), function(i) {
+  list(subsample = paramGrid$subsample[i],
+       colsample_bytree = paramGrid$colsample_bytree[i])
+})
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  cat("Testing case", i, "out of", length(paramList), "\n")
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             eta = 0.1, # for parameter tuning
+                             gamma = 0,
+                             max_depth = 5,
+                             objective = "reg:squarederror",
+                             tree_method = "approx"), 
+                  data = dtrain, 
+                  nrounds = 150, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+randomness <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+# max depth and min child weight
+
+
+~~~
+source("loadtopodata.R")
+paramGrid <- expand.grid(
+  max_depth = 4:12,
+  min_child_weight = c(1, seq(35, 80, by = 5))
+)
+paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  cat("Testing case ", i, " out of ", length(paramList), ".\n")
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain,
+                  nrounds = 100, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  gc()
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+depth_childweight <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+## Final Training and Testing
+
+Let's go with max_depth 5 and min_child_weight 65. (or 8,65, or 7,65, or 10,80)
+
+
+~~~
+source("loadtopodata.R")
+gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 500,
+               early_stopping_rounds = 25,
+               max_depth = 8,
+               min_child_weight = 65,
+               eta = 0.03
+               )
+gbm$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbm$evaluation_log)
+~~~
+{: .language-r}
+
+
+
+
+
+~~~
+pTox <- predict(gbm, as.matrix(select(testDF, -toxicity)))
+gbErrors <- pTox - testDF$toxicity
+tibble(`Predicted Toxicity` = pTox, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Toxicity`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+
+~~~
+importance(toxfor) %>% 
+  as_tibble(rownames = "Variable") %>% 
+  arrange(desc(IncNodePurity))
+~~~
+{: .language-r}
+
+
+~~~
+xgb.importance(model = gbm)
+~~~
+{: .language-r}
+
+
+# delete ^^^^
+
+
+
+
+# Hyperparameters
+
+
+# Cross Validation
+
+
+# Red Wine Data, revisited
+
+## Reload Red Wine Training/Test set
+
+
+~~~
+library(tidyverse)
+library(here)
+library(xgboost)
+wine <- read_csv(here("data", "wine.csv"))
+redwine <- wine %>% dplyr::slice(1:1599) 
+trainSize <- round(0.80 * nrow(redwine))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwine), trainSize)
+trainDF <- redwine %>% dplyr::slice(trainIndex)
+testDF <- redwine %>% dplyr::slice(-trainIndex)
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+watch <- list(train = dtrain, test = dtest)
+~~~
+{: .language-r}
+
+
+
+
+## Further tuning on white wine data
+
+
+~~~
+source("loadwinedata.R")
+paramGrid <- tibble(eta = seq(0.001, 0.4, length.out = 50))
+paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  toxCV <- xgb.cv(params = c(paramList[[i]], 
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = TRUE,
+                  print_every_n = 10)
+  gc()
+  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
+}
+etasearch <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+All values of eta are overfitting. Let's go with 0.09 for tuning experiments. See if we can beat a test RMSE of 0.6135.
+
+
+~~~
+source("loadwinedata.R")
+paramGrid <- expand.grid(
+  max_depth = 5:13,
+  min_child_weight = seq(0, 20, by = 2)
+)
+paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
+bestResults <- tibble()
+print(Sys.time())
+for(i in seq(length(paramList))) {
+  cat("   #", i, "of", length(paramList))
+  gbmod <- xgb.cv(params = c(paramList[[i]], 
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                           #  tree_method = "hist"), 
+                             tree_method = "exact"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = FALSE,
+                  print_every_n = 10)
+  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
+  gc() # Free unused memory after each loop iteration
+}
+cat("Finished.\n")
+print(Sys.time())
+depth_childweight <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+Looks like max_depth = 3 and min_child_weight = 50 doesn't overfit too bad. Try it:
+
+However max_depth = 12 and min_child_weight = 8 gives a test rmse of 0.6058.
+
+
+
+~~~
+gbmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 1000,
+               early_stopping_rounds = 25,
+               max_depth = 12,
+               min_child_weight = 8,
+               eta = 0.05
+               )
+gbmod$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbmod$evaluation_log)
+~~~
+{: .language-r}
+Best so far: test_rmse = 0.629. 
+
+
+
+~~~
+pww <- predict(gbmod, as.matrix(select(testDF, -quality)))
+gbErrors <- pww - testDF$quality
+tibble(`Predicted Quality` = pww, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+
+
+~~~
+xgb.importance(model = gbmod)
+~~~
+{: .language-r}
+
+## Tune using max_depth only?
+
+
+~~~
+source("loadwinedata.R")
+paramGrid <- expand.grid(
+  max_depth = 1:20
+)
+paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  cat("   #", i, "of", length(paramList))
+  gbmod <- xgb.cv(params = c(paramList[[i]], 
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = FALSE,
+                  print_every_n = 10)
+  gc()
+  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
+}
+cat("Finished.\n")
+depth_only <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+# Lauree++ recommended method
+
+https://sites.google.com/view/lauraepp/parameters
+
+## Tune using max_depth and max_leaves
+
+
+~~~
+source("loadwinedata.R")
+paramGrid <- expand.grid(
+  max_depth = seq(10, 30, by = 2),
+  max_leaves = c(15, 31, 63, 127, 255, 511, 1023, 2047, 4095)
+)
+paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
+bestResults <- tibble()
+for(i in seq(length(paramList))) {
+  cat("   #", i, "of", length(paramList))
+  gbmod <- xgb.cv(params = c(paramList[[i]], 
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = FALSE,
+                  print_every_n = 10)
+  gc()
+  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
+}
+cat("Finished.\n")
+depth_leaves <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+Best test-rmse is 12,63, followed by 26,255, 28,255.
+
+## Grid for random sampling.
+
+
+~~~
+source("loadwinedata.R")
+paramGrid <- expand.grid(
+  subsample = seq(0.5, 1, by = 0.1),
+  colsample_bytree = seq(0.5, 1, by = 0.1)
+)
+paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
+bestResults <- tibble()
+set.seed(2341)
+for(i in seq(length(paramList))) {
+  cat("   #", i, "of", length(paramList))
+  gbmod <- xgb.cv(params = c(paramList[[i]], 
+                             max_depth = 28, 
+                             max_leaves = 255,
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = FALSE,
+                  print_every_n = 10)
+  gc()
+  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
+}
+cat("Finished.\n")
+randrowcol <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+0.602 (.9,.6)
+.603  (.8, .9)
+
+## Try tuning gamma?
+
+
+~~~
+source("loadwinedata.R")
+paramGrid <- expand.grid(
+  gamma = seq(0, 0.1, by = 0.01)
+)
+paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
+bestResults <- tibble()
+set.seed(2341)
+for(i in seq(length(paramList))) {
+  cat("   #", i, "of", length(paramList))
+  gbmod <- xgb.cv(params = c(paramList[[i]], 
+                             max_depth = 28, 
+                             max_leaves = 255,
+                             subsample = 0.9,
+                             colsample_bytree = 0.6,
+                             eta = 0.1, # for parameter tuning
+                             objective = "reg:squarederror",
+                             tree_method = "hist"), 
+                  data = dtrain, 
+                  nrounds = 500, 
+                  nfold = 10,
+                  early_stopping_rounds = 10,
+                  verbose = FALSE,
+                  print_every_n = 10)
+  gc()
+  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
+}
+cat("Finished.\n")
+gammatest <- bind_cols(paramGrid, bestResults)
+~~~
+{: .language-r}
+
+gamma = 0.06 gives a little bit of improvement.
+
+## Final check against test set
+
+
+~~~
+gbmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 10000,
+               early_stopping_rounds = 50,
+               max_depth = 28,
+               max_leaves = 255,
+               subsample = 0.9,
+               colsample_bytree = 0.6,
+               gamma = 0.06,
+               eta = 0.001
+               )
+gbmod$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+tail(gbmod$evaluation_log)
+~~~
+{: .language-r}
+Best so far: test_rmse = 0.614885. 
+
+
+
+~~~
+pww <- predict(gbmod, as.matrix(select(testDF, -quality)))
+gbErrors <- pww - testDF$quality
+tibble(`Predicted Quality` = pww, Error = gbErrors) %>%
+  ggplot(aes(x = `Predicted Quality`, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+
+
+
+
+## Facebook data: overfitting ok?
+
+Data from UCI: https://archive.ics.uci.edu/ml/machine-learning-databases/00363/
+
+Cambridge Spark tutorial: https://blog.cambridgespark.com/hyperparameter-tuning-in-xgboost-4ff9100a3b2f
+
+
+~~~
+library(tidyverse)
+library(here)
+facebook <- read_csv(here("data", "facebook_comments", "Features_Variant_1.csv"), 
+                     col_names = FALSE)
+trainSize <- round(0.90 * nrow(facebook))
+set.seed(123) 
+trainIndex <- sample(nrow(facebook), trainSize)
+trainDF <- facebook %>% dplyr::slice(trainIndex)
+testDF <- facebook %>% dplyr::slice(-trainIndex)
+  
+library(xgboost)
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -X54)), label = trainDF$X54)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -X54)), label = testDF$X54)
+watch <- list(train = dtrain, test = dtest)
+
+mean(abs(testDF$X54 - mean(trainDF$X54))) # should be 11.31?
+~~~
+{: .language-r}
+
+
+~~~
+fmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 1000,
+               early_stopping_rounds = 10,
+               max_depth = 6,
+               min_child_weight = 1,
+               eta = 0.3,
+               subsample = 1,
+               colsample_bytree = 1,
+               objective = "reg:squarederror", # reg:linear is deprecated
+               eval_metric = "mae"
+               )
+print(fmod) # MAE is a little different (4.31 in tutorial)
+~~~
+{: .language-r}
+
+
+~~~
+fmod$evaluation_log %>% 
+  pivot_longer(cols = c(train_mae, test_mae), names_to = "MAE") %>% 
+  ggplot(aes(x = iter, y = value, color = MAE)) + geom_line()
+tail(fmod$evaluation_log)
+~~~
+{: .language-r}
+Indeed there is quite a lot of overfitting.
+
+
+~~~
+predX54 <- predict(fmod, as.matrix(select(testDF, -X54)))
+gbErrors <- predX54 - testDF$X54
+tibble(Predicted = predX54, Error = gbErrors) %>%
+  ggplot(aes(x = Predicted, y = Error))  +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 0, intercept = 0) +
+  theme_bw()
+~~~
+{: .language-r}
+
+Here's the "tuned" model:
+
+
+~~~
+fmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 1000,
+               early_stopping_rounds = 10,
+               max_depth = 10,
+               min_child_weight = 6,
+               eta = 0.01,
+               subsample = 0.8,
+               colsample_bytree = 1,
+               objective = "reg:squarederror", # reg:linear is deprecated
+               eval_metric = "mae"
+               )
+print(fmod) # MAE is a little different (3.90 in tutorial)
+~~~
+{: .language-r}
+
+
+~~~
+fmod$evaluation_log %>% 
+  pivot_longer(cols = c(train_mae, test_mae), names_to = "MAE") %>% 
+  ggplot(aes(x = iter, y = value, color = MAE)) + geom_line()
+tail(fmod$evaluation_log)
+~~~
+{: .language-r}
+
+Overfitting has improved somewhat, but it's still there. 
