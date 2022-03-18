@@ -1,6 +1,6 @@
 ---
 source: Rmd
-title: "Summary and Exploration"
+title: "Cross Validation and Tuning"
 teaching: 15 
 exercises: 50
 questions:
@@ -13,352 +13,12 @@ keypoints:
 
 ```{r, include=FALSE}
 source("../bin/chunk-options.R")
-knitr_fig_path("05-")
+knitr_fig_path("06-")
 ```
 
 ## Summary
 
 TODO: 
-
-## Exploration
-
-TODO: 
-
-## Toxicity Prediction
-
-[paper](https://doi.org/10.1021/ci034032s)
-
-```{r, eval = FALSE}
-download.file("https://www.openml.org/data/get_csv/52534/topo_2_1.arff", here("data", "topo21.csv"))
-```
-
-```{r, eval = FALSE}
-library(tidyverse)
-library(here)
-topoInfo <- read_csv(here("data", "topo21.csv")) %>%
-  rename(toxicity = oz267) %>% # toxicity is what we want to predict
-  filter(toxicity > 0.1) # remove outlier
-```
-
-## Challenge: Decision forest, and evaluate RMSE
-
-```{r, eval = FALSE}
-trainSize <- round(0.80 * nrow(topoInfo))
-set.seed(1234) 
-trainIndex <- sample(nrow(topoInfo), trainSize)
-trainDF <- topoInfo %>% dplyr::slice(trainIndex)
-testDF <- topoInfo %>% dplyr::slice(-trainIndex)
-```
-
-
-
-```{r, eval = FALSE}
-library(randomForest)
-set.seed(4567)
-toxfor <- randomForest(toxicity ~ ., data = trainDF, mtry = 10) # retrict mtry!
-print(toxfor)
-```
-
-
-
-
-```{r, eval = FALSE}
-pToxicity <- predict(toxfor, testDF)
-rfErrors <- pToxicity - testDF$toxicity
-tibble(`Predicted Toxicity` = pToxicity, Error = rfErrors) %>%
-  ggplot(aes(x = `Predicted Toxicity`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-```
-
-
-## Challenge: Gradient Boosted Trees
-
-
-```{r, eval = FALSE}
-library(xgboost)
-dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -toxicity)), label = trainDF$toxicity)
-dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -toxicity)), label = testDF$toxicity)
-watch <- list(train = dtrain, test = dtest)
-```
-
-## Cross Validation and Tuning
-
-```{r, eval = FALSE}
-paramList <- list(
-  list(eta = 0.3, max_depth = 6),
-  list(eta = 0.09, max_depth = 4),
-  list(eta = 0.08, max_depth = 4),
-  list(eta = 0.07, max_depth = 4),
-  list(eta = 0.06, max_depth = 4),
-  list(eta = 0.05, max_depth = 4),
-  list(eta = 0.04, max_depth = 4),
-  list(eta = 0.03, max_depth = 4),
-  list(eta = 0.02, max_depth = 4),
-  list(eta = 0.01, max_depth = 4),
-  list(eta = 0.09, max_depth = 2),
-  list(eta = 0.08, max_depth = 2),
-  list(eta = 0.07, max_depth = 2),
-  list(eta = 0.06, max_depth = 2),
-  list(eta = 0.05, max_depth = 2),
-  list(eta = 0.04, max_depth = 2),
-  list(eta = 0.03, max_depth = 2),
-  list(eta = 0.02, max_depth = 2),
-  list(eta = 0.01, max_depth = 2),
-  list(eta = 0.08, max_depth = 4, colsample_bytree = 0.8),
-  list(eta = 0.08, max_depth = 4, subsample = 0.8),
-  list(eta = 0.04, max_depth = 4, subsample = 0.5),
-  list(eta = 0.04, max_depth = 4, subsample = 0.5, colsample_bytree = 0.8)
-)
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  toxCV <- xgb.cv(params = paramList[[i]], 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 5,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-```
-
-
-```{r, eval = FALSE}
-set.seed(3412)
-paramList <- lapply(1:50, function(i) {
-  list(eta = runif(1, 0.01, 0.3),
-       max_depth = sample(3:10, 1))
-})
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-```
-
-```{r, eval = FALSE}
-set.seed(3412)
-paramList <- lapply(1:50, function(i) {
-  list(eta = runif(1, 0.01, 0.3),
-       gamma = runif(1, 0, 0.2))
-})
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-```
-
-## First, select a value of eta
-
-Choose values of eta and nrounds taking into account performance/time tradeoff, and
-stick with this choice.
-
-```{r, eval = FALSE}
-paramList <- lapply(0:50, function(i) {
-   list(eta = 0.001 + i/50 * 0.4)
-})
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-```
-
-Let's use a learning rate of 0.1 for parameter tuning (nrounds around 56). Once we have selected the parameters, we will use a learning rate of 0.03 for training (nrounds 208..293). 
-
-## Grid search
-
-```{r, eval = FALSE}
-paramGrid <- expand.grid(
-  max_depth = 4:12,
-  gamma = seq(0, 0.4, length.out = 10)
-)
-paramList <- lapply(1:nrow(paramGrid), function(i) {
-  list(max_depth = paramGrid$max_depth[i],
-       gamma = paramGrid$gamma[i])
-})
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  cat("Testing case ", i, " out of ", length(paramList), ".\n")
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                             tree_method = "approx"), 
-                  data = dtrain, 
-                  nrounds = 100, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-depth_gamma <- bind_cols(paramGrid, bestResults)
-```
-
-
-```{r, eval = FALSE}
-paramGrid <- expand.grid(
-  max_depth = 12,
-  gamma = seq(0, 0.02, length.out = 10)
-)
-paramList <- lapply(1:nrow(paramGrid), function(i) {
-  list(max_depth = paramGrid$max_depth[i],
-       gamma = paramGrid$gamma[i])
-})
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  cat("Testing case ", i, " out of ", length(paramList), ".\n")
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                             tree_method = "approx"), 
-                  data = dtrain, 
-                  nrounds = 100, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-depth_gamma2 <- bind_cols(paramGrid, bestResults)
-```
-
-Best: 
-gamma = 0, depth = 5, 4, 6
-gamma = .004, depth = 12?
-
-Next: try adding some randomness?
-
-```{r, eval = FALSE}
-set.seed(3444)
-paramGrid <- expand.grid(
-  subsample = seq(0.5, 1, by = 0.1),
-  colsample_bytree = seq(0.5, 1, by = 0.1)
-)
-paramList <- lapply(1:nrow(paramGrid), function(i) {
-  list(subsample = paramGrid$subsample[i],
-       colsample_bytree = paramGrid$colsample_bytree[i])
-})
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  cat("Testing case", i, "out of", length(paramList), "\n")
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             eta = 0.1, # for parameter tuning
-                             gamma = 0,
-                             max_depth = 5,
-                             objective = "reg:squarederror",
-                             tree_method = "approx"), 
-                  data = dtrain, 
-                  nrounds = 150, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-randomness <- bind_cols(paramGrid, bestResults)
-```
-
-# max depth and min child weight
-
-```{r, eval = FALSE}
-source("loadtopodata.R")
-paramGrid <- expand.grid(
-  max_depth = 4:12,
-  min_child_weight = c(1, seq(35, 80, by = 5))
-)
-paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  cat("Testing case ", i, " out of ", length(paramList), ".\n")
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain,
-                  nrounds = 100, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  gc()
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-depth_childweight <- bind_cols(paramGrid, bestResults)
-```
-
-## Final Training and Testing
-
-Let's go with max_depth 5 and min_child_weight 65. (or 8,65, or 7,65, or 10,80)
-
-```{r, eval = FALSE}
-source("loadtopodata.R")
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 500,
-               early_stopping_rounds = 25,
-               max_depth = 8,
-               min_child_weight = 65,
-               eta = 0.03
-               )
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbm$evaluation_log)
-```
-
-
-
-
-```{r, eval = FALSE}
-pTox <- predict(gbm, as.matrix(select(testDF, -toxicity)))
-gbErrors <- pTox - testDF$toxicity
-tibble(`Predicted Toxicity` = pTox, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Toxicity`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-```
-
-```{r, eval = FALSE}
-importance(toxfor) %>% 
-  as_tibble(rownames = "Variable") %>% 
-  arrange(desc(IncNodePurity))
-```
-
-```{r, eval = FALSE}
-xgb.importance(model = gbm)
-```
-
-
-# delete ^^^^
-
 
 
 
@@ -388,10 +48,150 @@ dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$
 watch <- list(train = dtrain, test = dtest)
 ```
 
+```{r, eval = FALSE}
+set.seed(8833)
+rwCV <- xgb.cv(params = list(eta = 0.3),
+               data = dtrain, 
+               nfold = 10,
+               nrounds = 500,
+               early_stopping_rounds = 10,
+               verbose = FALSE)
+```
+
+Examine cv results.
+
+```{r, eval = FALSE}
+paramDF <- tibble(eta = c(0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4))
+paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
+bestResults <- tibble()
+set.seed(8833)
+pb <- txtProgressBar(style = 3)
+for(i in seq(length(paramList))) {
+  rwCV <- xgb.cv(params = paramList[[i]], 
+                 data = dtrain, 
+                 nrounds = 500, 
+                 nfold = 10,
+                 early_stopping_rounds = 10,
+                 verbose = FALSE)
+  bestResults <- bestResults %>% 
+    bind_rows(rwCV$evaluation_log[rwCV$best_iteration])
+  gc() # Free unused memory after each loop iteration
+  setTxtProgressBar(pb, i/length(paramList))
+}
+close(pb)
+etasearch <- bind_cols(paramDF, bestResults)
+```
+
+Use eta = 0.1 for parameter tuning. 
+
+## Grid search
+
+```{r, eval = FALSE}
+paramDF <- expand.grid(
+  max_depth = 5:13,
+  min_child_weight = seq(0, 20, by = 2),
+  eta = 0.1
+)
+paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
+bestResults <- tibble()
+set.seed(8833)
+pb <- txtProgressBar(style = 3)
+for(i in seq(length(paramList))) {
+  rwCV <- xgb.cv(params = paramList[[i]],
+                 data = dtrain, 
+                 nrounds = 500, 
+                 nfold = 10,
+                 early_stopping_rounds = 10,
+                 verbose = FALSE)
+  bestResults <- bestResults %>% 
+    bind_rows(rwCV$evaluation_log[rwCV$best_iteration])
+  gc() # Free unused memory after each loop iteration
+  setTxtProgressBar(pb, i/length(paramList))
+}
+close(pb)
+depth_childweight <- bind_cols(paramDF, bestResults)
+```
+
+Looks like deep trees do better. 
+
+```{r, eval = FALSE}
+paramDF <- expand.grid(
+  max_depth = seq(10, 30, by = 2),
+  max_leaves = c(15, 31, 63, 127, 255, 511, 1023, 2047, 4095),
+  eta = 0.1
+)
+paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
+bestResults <- tibble()
+set.seed(8833)
+pb <- txtProgressBar(style = 3)
+for(i in seq(length(paramList))) {
+  rwCV <- xgb.cv(params = paramList[[i]],
+                 data = dtrain, 
+                 nrounds = 500, 
+                 nfold = 10,
+                 early_stopping_rounds = 10,
+                 verbose = FALSE)
+  bestResults <- bestResults %>% 
+    bind_rows(rwCV$evaluation_log[rwCV$best_iteration])
+  gc() # Free unused memory after each loop iteration
+  setTxtProgressBar(pb, i/length(paramList))
+}
+close(pb)
+depth_leaves <- bind_cols(paramDF, bestResults)
+```
+
+## Challenge: Do a grid search for subsample and colsample_bytree
+
+Solution:
+
+```{r, eval = FALSE}
+paramDF <- expand.grid(
+  subsample = seq(0.5, 1, by = 0.1),
+  colsample_bytree = seq(0.5, 1, by = 0.1),
+  max_depth = 24,
+  max_leaves = 2047,
+  eta = 0.1
+)
+paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
+bestResults <- tibble()
+set.seed(8833)
+pb <- txtProgressBar(style = 3)
+for(i in seq(length(paramList))) {
+  rwCV <- xgb.cv(params = paramList[[i]],
+                 data = dtrain, 
+                 nrounds = 500, 
+                 nfold = 10,
+                 early_stopping_rounds = 10,
+                 verbose = FALSE)
+  bestResults <- bestResults %>% 
+    bind_rows(rwCV$evaluation_log[rwCV$best_iteration])
+  gc() 
+  setTxtProgressBar(pb, i/length(paramList))
+}
+close(pb)
+randsubsets <- bind_cols(paramDF, bestResults)
+```
+
+## Final check against test set
+
+```{r, eval = FALSE}
+rwMod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
+               nrounds = 10000,
+               early_stopping_rounds = 50,
+               max_depth = 24,
+               max_leaves = 2047,
+               subsample = 0.7,
+               colsample_bytree = 0.5,
+               eta = 0.01
+               )
+rwMod$evaluation_log %>% 
+  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+print(rwMod)
+```
 
 
-
-## Further tuning on white wine data
+## CHALLENGE: Further tuning on white wine data
 
 ```{r, eval = FALSE}
 source("loadwinedata.R")
@@ -649,6 +449,7 @@ tibble(`Predicted Quality` = pww, Error = gbErrors) %>%
 
 
 
+## Challenge: Can you beat this tutorial?
 
 ## Facebook data: overfitting ok?
 
