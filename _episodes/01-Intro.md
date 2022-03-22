@@ -21,6 +21,8 @@ keypoints:
 
 ## What is Machine Learning?
 
+Generally speaking, *machine learning* encompasses a range of techniques and algorithms
+
 ## Classification vs. Regression
 
 ## Our Focus
