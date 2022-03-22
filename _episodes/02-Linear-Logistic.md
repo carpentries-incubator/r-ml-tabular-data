@@ -3,8 +3,8 @@
 # Instead, please edit 02-Linear-Logistic.md in _episodes_rmd/
 source: Rmd
 title: "Linear and Logistic Regression"
-teaching: 50
-exercises: 15
+teaching: 40
+exercises: 10
 questions:
 - "How can a model make predictions?"
 - "How do we judge the accuracy of predictions?"
@@ -20,6 +20,8 @@ keypoints:
 
 
 ## Kyphosis Data
+
+Make sure the `rpart` package is loaded, and examine the structure of the `kyphosis` data frame.
 
 
 ~~~
@@ -39,55 +41,50 @@ str(kyphosis)
 ~~~
 {: .output}
 
-For a description of this data set, you can view the help menu for `kyphosis`.
-
-
-~~~
-?kyphosis
-~~~
-{: .language-r}
-
-
-~~~
-library(tidyverse)
-ggplot(kyphosis, aes(x = Number, y = Start)) + geom_point()
-~~~
-{: .language-r}
-
-<img src="../fig/rmd-02-unnamed-chunk-4-1.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" width="612" style="display: block; margin: auto;" />
-
-> ## Challenge: Number and Start
->
-> Do you notice a trend in the above scatterplot? In the context of
-> the `kyphosis` data, why would there be such a trend?
->
-> > ## Solution
-> > 
-> > There appears to be a weak, negative association between
-> > `Number` and `Start`: larger values of `Number` correspond
-> > to smaller values of `Start`. This correspondence makes sense,
-> > because if more vertebrae are involved, the topmost vertebra would
-> > have to be higher up. (The vertebrae are numbered starting from
-> > the top.)
-> > 
-> {: .solution}
-{: .challenge}
-
+Notice that there are 81 observations of four variables, so this is a rather small data set for machine learning techniques. In this episode, we will use this data set to illustrate the process of training and testing, where our models will be built using classical linear and logistic regression. 
 
 ## Make a training set and a test set
+
+The first step in the process is to create a random train/test split of our data set. There are various R packages that automate such tasks, but it is illustrative to use base R for now.
+
+The following commands will randomly select the row indexes of the training set (and therefore also of the testing set).
 
 
 ~~~
 trainSize <- round(0.75 * nrow(kyphosis))
 set.seed(6789) # so we all get the same random sets
 trainIndex <- sample(nrow(kyphosis), trainSize)
+~~~
+{: .language-r}
+
+Take a look at the `trainIndex` variable in the Environment tab of RStudio. Since we set a particular value fo the random seed, we should all see the same sample of random numbers.
+
+Next we form two data frames using these indexes. Recall that the selection of `-trainIndex` will select all rows whose indexes are *not* in the `trainIndex` vector.
+
+
+~~~
 trainDF <- kyphosis[trainIndex, ]
 testDF <- kyphosis[-trainIndex, ]
 ~~~
 {: .language-r}
 
+We can `View` the train and test sets in RStudio to check that they form a random partition of the `kyphosis` data.
 
-## Linear Regression
+
+~~~
+View(trainDF)
+View(testDF)
+~~~
+{: .language-r}
+
+## Linear Regression as Supervised Learning
+
+In the previous episode, we constructed a scatterplot of `Number` versus `Start` and observed a slight negative assocition. We can model this association with a linear function 
+
+$$ 
+\text{Start} = a + b \cdot \text{Number}
+$$
+where $a$ and $b$ are the intercept and slope, respectively, of the least squares regression line. To compute $a$ and $b$, we use the `lm` function in R.
 
 
 ~~~
@@ -125,25 +122,80 @@ The predicted `Start` is obtained by multiplying `Number` by -1.204 and adding 1
 > ## Challenge: Make a prediction
 >
 > Predict the number of the topmost vertebra when the number of
-> vertebrae involved is 6.
+> vertebrae involved is 3.
 >
 > > ## Solution
 > > 
 > > Six times -1.204 plus 
 > > 16.427 
 > > is approximately 
-> > 9.2.
+> > 12.81.
 > > 
 > {: .solution}
 {: .challenge}
 
 ## Try the Testing Data Set
 
-How well will our model perform on data that it was not trained on?
+In R there is a generic method called `predict` that will make predictions given models of various types. For example, we can compute the predicted starting vertebrae for all the cases in our testing set as follows.
 
 
 ~~~
 predictedStart <- predict(model1, testDF)
+~~~
+{: .language-r}
+
+> ## Challenge: Check our prediction
+>
+> Check that the result of the `predict` function agrees with the 
+> result of the previous challenge.
+>
+> > ## Solution
+> > 
+> > 
+> > ~~~
+> > head(predictedStart)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> >       12       21       32       36       37       38 
+> > 12.81438 14.01851 14.01851 12.81438 12.81438 10.40611 
+> > ~~~
+> > {: .output}
+> > 
+> > 
+> > 
+> > ~~~
+> > head(testDF)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> >    Kyphosis Age Number Start
+> > 12   absent 148      3    16
+> > 21   absent  22      2    16
+> > 32   absent 125      2    11
+> > 36   absent  93      3    16
+> > 37   absent   1      3     9
+> > 38  present  52      5     6
+> > ~~~
+> > {: .output}
+> > 
+> > Notice that the first row of our testing set has a `Number` value of 3,
+> > and the first value of `predictedStart` agrees with our answer to the
+> > previous challenge.
+> > 
+> {: .solution}
+{: .challenge}
+
+Notice that, in general, the value of `Start` predicted by the model will not equal the actual value of `Start` in the testing set. However, in an accurate model, we would hope that the predicted values will be close to the actual values. To assess how close our predictions are to reality, we compute a vector of errors: predicted values minus actual values.
+
+
+~~~
 actualStart <- testDF$Start
 errors <- predictedStart - actualStart
 cat(round(errors, 1))
@@ -157,7 +209,24 @@ cat(round(errors, 1))
 ~~~
 {: .output}
 
-TODO: Explain RMSE
+## Measuring the Prediction Error
+
+There are several ways to summarize the overall error in a regression model. The average error is not a good choice, because errors will usually have positive and negative values, which cancel. To avoid this cancellation effect, we can take the mean of the squares of the errors: the *Mean Squared Error*, or MSE.
+
+
+~~~
+mean(errors^2)
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] 13.14172
+~~~
+{: .output}
+
+An alternative that has the same units as the output is the square root of the MSE: the *Root Mean Squared Error*, or RMSE.
 
 
 ~~~
@@ -194,6 +263,8 @@ sqrt(mean(errors^2))
 > > 
 > {: .solution}
 {: .challenge}
+
+We will compare most of the regression models that follow using the RMSE of the prediction error on the testing set.
 
 ## Logistic Regression
 
