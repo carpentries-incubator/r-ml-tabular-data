@@ -4,7 +4,7 @@
 source: Rmd
 title: "Linear and Logistic Regression"
 math: true
-teaching: 40
+teaching: 35
 exercises: 10
 questions:
 - "How can a model make predictions?"
@@ -80,12 +80,9 @@ View(testDF)
 
 ## Linear Regression as Supervised Learning
 
-In the previous episode, we constructed a scatterplot of `Number` versus `Start` and observed a slight negative assocition. We can model this association with a linear function 
-
-$$ 
-\text{Start} = a + b \cdot \text{Number}
-$$
-where $a$ and $b$ are the intercept and slope, respectively, of the least squares regression line. To compute $a$ and $b$, we use the `lm` function in R.
+In the previous episode, we constructed a scatterplot of `Number` versus `Start` and observed a slight negative assocition. We can model this association with a linear function
+$\text{Start} = a + b \cdot \text{Number}$
+where $a$ and $b$ are the intercept and slope, respectively, of the least squares regression line. To compute $a$ and $b$, we use the `lm` function in R. The formula `Start ~ Number` specifies that `Number` is the explanatory (independent) variable, and `Start` is the response (dependent) variable. A helpful mnemonic is to read the `~` symbol as "as explained by."
 
 
 ~~~
@@ -193,7 +190,7 @@ predictedStart <- predict(model1, testDF)
 > {: .solution}
 {: .challenge}
 
-Notice that, in general, the value of `Start` predicted by the model will not equal the actual value of `Start` in the testing set. However, in an accurate model, we would hope that the predicted values will be close to the actual values. To assess how close our predictions are to reality, we compute a vector of errors: predicted values minus actual values.
+In general, the value of `Start` predicted by the model will not equal the actual value of `Start` in the testing set. However, in an accurate model, we would hope that the predicted values will be close to the actual values. To assess how close our predictions are to reality, we compute a vector of errors: predicted values minus actual values.
 
 
 ~~~
@@ -212,7 +209,7 @@ cat(round(errors, 1))
 
 ## Measuring the Prediction Error
 
-There are several ways to summarize the overall error in a regression model. The average error is not a good choice, because errors will usually have positive and negative values, which cancel. To avoid this cancellation effect, we can take the mean of the squares of the errors: the *Mean Squared Error*, or MSE.
+There are several ways to summarize the overall error in a regression model. The average error is not a good choice, because errors will usually have positive and negative values, which will cancel when averaged. To avoid this cancellation effect, we can take the mean of the squares of the errors: the *Mean Squared Error*, or MSE.
 
 
 ~~~
@@ -269,9 +266,9 @@ We will compare most of the regression models that follow using the RMSE of the 
 
 ## Logistic Regression
 
-TODO: Density plots
+In the previous episode, we observed that in the context of the kyphosis data, it would be natural to try to predict whether a post-op kyphosis will be present, given the age of the patient, the number of vertebrae involved, and the number of the first vertebra operated on. In this situation, `Kyphosis` is our categorical response variable, and `Age`, `Number`, and `Start` are the explanatory variables. 
 
-TODO: Logistic model
+Since our response variable is categorical, we need to employ a *classification* model. The following command will fit a [Multiple Logistic Regression](https://rcompanion.org/rcompanion/e_07.html) model to our training data using the `glm` command.
 
 
 ~~~
@@ -279,13 +276,17 @@ model2 <- glm(Kyphosis ~ Age + Number + Start, data = trainDF, family = "binomia
 ~~~
 {: .language-r}
 
-Shorthand notation:
+Notice that we specified the formula `Kyphosis ~ Age + Number + Start`, because `Kyphosis` is the response variable and `Age`, `Number`, and `Start` are the explanatory variables. Since `Age`, `Number`, and `Start` make up all the remaining columns in our data frame, we could have used the equivalent formula `Kyphosis ~ .`, as follows.
 
 
 ~~~
 model2 <- glm(Kyphosis ~ ., data = trainDF, family = "binomial")
 ~~~
 {: .language-r}
+
+The formula `Kyphosis ~ .` can be read as "`Kyphosis` as explained by everything else."
+
+The `predict` function for binomial `glm` models will return predicted probabilities of the response variable if we specify the option `type = "response"`.
 
 
 ~~~
@@ -307,6 +308,8 @@ predict(model2, testDF, type = "response")
 ~~~
 {: .output}
 
+If we actually want to know whether or not the model predicts that a kyphosis is present, we need to convert these probabilities to the appropriate levels of the `Kyphosis` variable. 
+
 
 ~~~
 levels(kyphosis$Kyphosis)
@@ -319,6 +322,8 @@ levels(kyphosis$Kyphosis)
 [1] "absent"  "present"
 ~~~
 {: .output}
+
+The first level corresponds to probabilities near zero, and the second level corresponds to probabilities near one. So we can create a vector of the predicted `Kyphosis` values of our testing set as follows.
 
 
 ~~~
@@ -340,7 +345,7 @@ predictedKyphosis
 ~~~
 {: .output}
 
-TODO: accuracy measurement
+The actual occurrences of kyphosis in our testing set are given by the vector `testDF$Kyphosis`, so the following command will tell us which predictions were correct.
 
 
 ~~~
@@ -358,6 +363,8 @@ testDF$Kyphosis == predictedKyphosis
 ~~~
 {: .output}
 
+One way to measure the accuracy of a classification model is to report the proportion of correct predictions. Recall that the `sum` function, when applied to a logical vector, will return the number of `TRUE`s in the vector.
+
 
 ~~~
 accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
@@ -372,6 +379,103 @@ Proportion of correct predictions using testing data:  0.8
 ~~~
 {: .output}
 
-TODO: Challenge: Try a different random seed. Does the accuracy stay the same?
+TODO: Challenge: Try a different random seed and split proportion. Does the accuracy stay the same?
 
-TODO: Challenge: Try using multinom from nnet package.
+> ## Challenge: Try different train/test splits
+>
+> Before we constructed the models in this episode, we divided the data into 
+> a training set and a testing set. Try experimenting with different train/test
+> splits to see if it has any effect on the model accuracy. Specifically, re-do
+> the construction of `model2`, the logistic regression model, with the 
+> following modifications.
+>
+> 1. Try a different value of the random seed. Does the prediction accuracy
+> change?
+>
+> 2. We originally chose a training set size that was 75% of the size of the
+> `kyphosis` data frame. Experiment with different percentages for the
+> train/test split. Does changing the size of the training set affect the 
+> accuracy of the model?
+>
+> > ## Solution
+> > 
+> > Let's define a function to avoid repeating code.
+> > 
+> > 
+> > ~~~
+> > testAccuracy <- function(splitPercent, randomSeed) {
+> >   tSize <- round(splitPercent * nrow(kyphosis))
+> >   set.seed(randomSeed) 
+> >   tIndex <- sample(nrow(kyphosis), tSize)
+> >   trnDF <- kyphosis[tIndex, ]
+> >   tstDF <- kyphosis[-tIndex, ]
+> >   kmod <- glm(Kyphosis ~ ., data = trnDF, family = "binomial")
+> >   predK <- ifelse(predict(kmod, tstDF, type = "response") < 0.5, "absent", "present")
+> >   return(sum(tstDF$Kyphosis == predK)/nrow(tstDF))
+> > }
+> > ~~~
+> > {: .language-r}
+> > 
+> > 1. Try different seeds:
+> > 
+> > 
+> > ~~~
+> > testAccuracy(0.75, 6789) # our original settings
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> > [1] 0.8
+> > ~~~
+> > {: .output}
+> > 
+> > 
+> > 
+> > ~~~
+> > testAccuracy(0.75, 1234)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> > [1] 0.9
+> > ~~~
+> > {: .output}
+> > 
+> > So the choice of seed makes a difference.
+> > 
+> > 2. Try different split percentages:
+> > 
+> > 
+> > ~~~
+> > testAccuracy(0.9, 6789)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> > [1] 0.75
+> > ~~~
+> > {: .output}
+> > 
+> > 
+> > 
+> > ~~~
+> > testAccuracy(0.5, 6789)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> > [1] 0.7804878
+> > ~~~
+> > {: .output}
+> > 
+> {: .solution}
+{: .challenge}
+

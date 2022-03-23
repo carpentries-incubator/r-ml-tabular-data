@@ -3,7 +3,7 @@
 # Instead, please edit 01-Intro.md in _episodes_rmd/
 source: Rmd
 title: "A Brief Introduction to Machine Learning"
-teaching: 20 
+teaching: 15
 exercises: 5
 questions:
 - "What is machine learning?"
@@ -67,7 +67,7 @@ For a description of this data set, you can view the help menu for `kyphosis`.
 ~~~
 {: .language-r}
 
-We can build a model that will predict whether a kyphosis will be present (the output) after an operation, given the age of the patient, the number of vertebrae involved, and the number of the first vertebra operated on (the input). We will train our model on a selection of rows of this data frame (e.g., about 60 randomly selected rows) and then test it on the remaining rows.
+For example, in a later episode we will build a model that will predict whether a post-op kyphosis will be present (the output), given the age of the patient, the number of vertebrae involved, and the number of the first vertebra operated on (the input). We will train our model on a selection of rows of this data frame (e.g., about 60 randomly selected rows) and then test it on the remaining rows.
 
 Let's spend a few minutes exploring this data set.
 
@@ -119,3 +119,4 @@ This lesson will focus on three machine learning methods that apply to both clas
 
 We will also briefly explore classical linear and logistic regression, which we can view as simple examples of supervised learning. 
 
+One of the main goals of this lesson is to help learners develop their R coding skills, especially for the purpose of using the available machine learning packages on the Comprehensive R Archive Network (CRAN). We will focus on the packages `randomForest` and `xgboost`, but many other packages are described in the ([CRAN Machine Learning Task View](https://cran.r-project.org/view=MachineLearning).

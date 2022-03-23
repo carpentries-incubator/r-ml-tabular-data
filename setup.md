@@ -22,6 +22,7 @@ Please install the following R packages:
 Create a new RStudio workspace where you will keep all of the files for this workshop. In the project directory (where the `.Rproj` file is), create a subdirectory called `data`. You should then be able to download the data for the workshop using the following commands.
 
 ```r
+library(here)
 download.file("https://www.openml.org/data/get_csv/49817/wine_quality.arff", 
                here("data", "wine.csv"))
 ```
