@@ -3,6 +3,7 @@
 # Instead, please edit 02-Linear-Logistic.md in _episodes_rmd/
 source: Rmd
 title: "Linear and Logistic Regression"
+math: true
 teaching: 40
 exercises: 10
 questions:
@@ -57,7 +58,7 @@ trainIndex <- sample(nrow(kyphosis), trainSize)
 ~~~
 {: .language-r}
 
-Take a look at the `trainIndex` variable in the Environment tab of RStudio. Since we set a particular value fo the random seed, we should all see the same sample of random numbers.
+Take a look at the `trainIndex` variable in the Environment tab of RStudio. Since we set a particular value for the random seed, we should all see the same sample of random numbers.
 
 Next we form two data frames using these indexes. Recall that the selection of `-trainIndex` will select all rows whose indexes are *not* in the `trainIndex` vector.
 
@@ -117,7 +118,7 @@ F-statistic: 10.47 on 1 and 59 DF,  p-value: 0.001988
 ~~~
 {: .output}
 
-The predicted `Start` is obtained by multiplying `Number` by -1.204 and adding 16.427.
+The predicted `Start` is obtained by multiplying `Number` by -1.2041 and adding 16.4268.
 
 > ## Challenge: Make a prediction
 >
@@ -126,8 +127,8 @@ The predicted `Start` is obtained by multiplying `Number` by -1.204 and adding 1
 >
 > > ## Solution
 > > 
-> > Six times -1.204 plus 
-> > 16.427 
+> > Three times -1.2041 plus 
+> > 16.4268 
 > > is approximately 
 > > 12.81.
 > > 
