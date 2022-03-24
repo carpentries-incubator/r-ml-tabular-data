@@ -3,18 +3,17 @@
 # Instead, please edit 02-Linear-Logistic.md in _episodes_rmd/
 source: Rmd
 title: "Linear and Logistic Regression"
-math: true
 teaching: 35
 exercises: 10
 questions:
 - "How can a model make predictions?"
-- "How do we judge the accuracy of predictions?"
+- "How do we measure the accuracy of predictions?"
 objectives:
 - "Define a linear regression model."
 - "Define a logistic regression model."
 - "Split data into training and testing sets."
 keypoints:
-- "Regression models can make predictions."
+- "Classical linear and logistic regression models can be thought of as examples of regression and classification models in machine learning."
 - "Testing sets can be used to measure the accuracy of a model."
 ---
 
@@ -46,9 +45,9 @@ Notice that there are 81 observations of four variables, so this is a rather sma
 
 ## Make a training set and a test set
 
-The first step in the process is to create a random train/test split of our data set. There are various R packages that automate such tasks, but it is illustrative to use base R for now.
+The first step in the process is to create a random train/test split of our data set. We will use the training set to build our model, without looking at the testing set. After our model is built, we will measure the accuracy of its predictions using the testing set.
 
-The following commands will randomly select the row indexes of the training set (and therefore also of the testing set).
+There are various R packages that automate common tasks in machine learning, but it is instructive to use base R for now. The following commands will randomly select the row indexes of the training set (and therefore also of the testing set).
 
 
 ~~~
@@ -80,9 +79,9 @@ View(testDF)
 
 ## Linear Regression as Supervised Learning
 
-In the previous episode, we constructed a scatterplot of `Number` versus `Start` and observed a slight negative assocition. We can model this association with a linear function
-$\text{Start} = a + b \cdot \text{Number}$
-where $a$ and $b$ are the intercept and slope, respectively, of the least squares regression line. To compute $a$ and $b$, we use the `lm` function in R. The formula `Start ~ Number` specifies that `Number` is the explanatory (independent) variable, and `Start` is the response (dependent) variable. A helpful mnemonic is to read the `~` symbol as "as explained by."
+In the previous episode, we constructed a scatterplot of `Number` versus `Start` and observed a slight negative association. A model of this relationship is given by the [least squares regression line](https://rcompanion.org/rcompanion/e_01.html), which we can consider as a simple example of supervised learning.  To compute the slope and y-intercept of this line, we use the `lm` function in R. 
+
+In the following code block, the formula `Start ~ Number` specifies that `Number` is the explanatory (independent) variable, and `Start` is the response (dependent) variable. A helpful mnemonic is to read the `~` symbol as "as explained by." To illustrate the process of supervised learning, we fit this regression line to the training set `trainDF`, saving the testing set for later.
 
 
 ~~~
@@ -115,7 +114,7 @@ F-statistic: 10.47 on 1 and 59 DF,  p-value: 0.001988
 ~~~
 {: .output}
 
-The predicted `Start` is obtained by multiplying `Number` by -1.2041 and adding 16.4268.
+The predicted `Start` is obtained by multiplying `Number` by the regression slope -1.2041 and adding the intercept 16.4268.
 
 > ## Challenge: Make a prediction
 >
@@ -209,7 +208,7 @@ cat(round(errors, 1))
 
 ## Measuring the Prediction Error
 
-There are several ways to summarize the overall error in a regression model. The average error is not a good choice, because errors will usually have positive and negative values, which will cancel when averaged. To avoid this cancellation effect, we can take the mean of the squares of the errors: the *Mean Squared Error*, or MSE.
+There are several ways to summarize the overall error in a regression model. The mean of the errors is not a good choice, because errors will usually have positive and negative values, which will cancel when averaged. To avoid this cancellation effect, we can take the mean of the squares of the errors: the *Mean Squared Error*, or MSE.
 
 
 ~~~
@@ -224,7 +223,7 @@ mean(errors^2)
 ~~~
 {: .output}
 
-An alternative that has the same units as the output is the square root of the MSE: the *Root Mean Squared Error*, or RMSE.
+For a measurement of overall error in the same units as the output variable, we take the square root of the MSE to obtain the *Root Mean Squared Error*, or RMSE.
 
 
 ~~~
@@ -262,7 +261,7 @@ sqrt(mean(errors^2))
 > {: .solution}
 {: .challenge}
 
-We will compare most of the regression models that follow using the RMSE of the prediction error on the testing set.
+In upcoming episodes, we will compare different regression models using the RMSE of the prediction error on the testing set.
 
 ## Logistic Regression
 
@@ -379,8 +378,6 @@ Proportion of correct predictions using testing data:  0.8
 ~~~
 {: .output}
 
-TODO: Challenge: Try a different random seed and split proportion. Does the accuracy stay the same?
-
 > ## Challenge: Try different train/test splits
 >
 > Before we constructed the models in this episode, we divided the data into 
@@ -416,7 +413,7 @@ TODO: Challenge: Try a different random seed and split proportion. Does the accu
 > > ~~~
 > > {: .language-r}
 > > 
-> > 1. Try different seeds:
+> > Try different seeds:
 > > 
 > > 
 > > ~~~
@@ -447,7 +444,7 @@ TODO: Challenge: Try a different random seed and split proportion. Does the accu
 > > 
 > > So the choice of seed makes a difference.
 > > 
-> > 2. Try different split percentages:
+> > Try different split percentages:
 > > 
 > > 
 > > ~~~

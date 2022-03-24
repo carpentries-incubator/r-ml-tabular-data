@@ -25,7 +25,7 @@ Broadly speaking, *machine learning* encompasses a range of techniques and algor
 
 * **Tabular data** takes the form of a data frame. The methods we consider can apply to a variety of data frames, from large to very large (e.g., up to 1,000's of columns/variables and 100,000's of rows/observations, or more).
 
-* **Supervised learning** methods build models that predict output values of a function, given some example input and output values. In our context, the output this function will typically have the form of one of the columns of our data frame, while the input has the form of the remaining columns.
+* **Supervised learning** methods build models that predict output values of a function, given some example input and output values. In our context, the output of this function will typically have the form of one of the columns of our data frame, while the input has the form of the remaining columns.
 
 Given a data frame, we will build machine learning models as follows.
 
@@ -33,7 +33,7 @@ Given a data frame, we will build machine learning models as follows.
 
 2. *Train* the model on the training set. Part of this process may involve *tuning*: tweaking various model settings for optimal performance.
 
-3. *Test* the accuracy of the model using the testing set. 
+3. *Test* the accuracy of the model using the testing set. Since the testing set was not used in the training of the model, the testing accuracy will be a good indication of how well our model will perform on future (unknown) input values.
 
 Once our model is built, we can use it to *predict* output values from new cases of input, and we can also examine the structure of the model to *infer* the nature of the relationship between the input and the output.
 
