@@ -32,7 +32,7 @@ library(here)
 wine <- read_csv(here("data", "wine.csv"))
 ```
 
-```{r}
+```{r, fig.width = 8.5, fig.height = 4}
 glimpse(wine)
 ggplot(wine, aes(x = quality)) + geom_histogram(binwidth = 1)
 ```
@@ -102,7 +102,7 @@ More details can be found in [Breiman's 2002 paper](https://www.stat.berkeley.ed
 
 The `randomForest` package is an R implementation of Breiman and Cutler's original Fortran code. The syntax for building a model is similar to `lm`, `glm`, and `rpart`. Because of the randomness used in the algorithm, it is good practice to set the random seed so that the results will be reproducible.
 
-```{r}
+```{r, message=FALSE, results=FALSE, warning=FALSE}
 library(randomForest)
 set.seed(4567)
 redwineForest <- randomForest(grade ~ ., data = trainDF)
@@ -183,8 +183,8 @@ importance(rwforFull, type = 1)
 > > ```
 > > 
 > > The top two variables are `alcohol` and `sulphates`, which both occur near
-> > the root of the decision tree. The least important variables are `free.sulfur.dioxide`
-> > and `residual.sugar`, which do not occur in the decision tree. So it seems 
+> > the root of the decision tree. The least important variables are `residual.sugar`
+> > and `citric.acid`, which do not occur in the decision tree. So it seems 
 > > consistent that the important variables play important roles in the decision 
 > > tree, while the unimportant variables do not.
 > > 
@@ -208,7 +208,7 @@ testDF <- redwine %>% slice(-trainIndex)
 
 ## Fit a Decision Tree
 
-When the dependent variable is quantitative, we use the `method = anova` option in `rpart` to construct a decision tree. In this situation, the predicted value corresponding to each node is the mean value of the observations assigned to the node, and the algorithm searches for a split that minimizes the sum of the squared errors of these predictions.
+When the dependent variable is quantitative, we use the `method = "anova"` option in `rpart` to construct a decision tree. In this situation, the predicted value corresponding to each node is the mean value of the observations assigned to the node, and the algorithm searches for a split that minimizes the sum of the squared errors of these predictions.
 
 ```{r}
 rwtree <- rpart(quality ~ ., data = trainDF, method = "anova")
@@ -234,7 +234,7 @@ rpart.plot(rwtree)
 > > 
 > > ```{r}
 > > trainDF %>% 
-> >   filter(alcohol<11) %>% 
+> >   filter(alcohol < 11) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ```
 > > 
@@ -243,7 +243,7 @@ rpart.plot(rwtree)
 > > 
 > > ```{r}
 > > trainDF %>% 
-> >   filter(alcohol<11, sulphates < 0.58) %>% 
+> >   filter(alcohol < 11, sulphates < 0.58) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ```
 > > 
@@ -263,7 +263,7 @@ Since this is a regression model, we assess its accuracy using the root mean squ
 
 ```{r}
 errors <- predictedQuality - testDF$quality
-decTreeRMSE <- sqrt(mean(dtErrors^2))
+decTreeRMSE <- sqrt(mean(errors^2))
 decTreeRMSE
 ```
 
@@ -286,7 +286,7 @@ The random forest RMSE is better (smaller) than the decision tree RMSE.
 print(rwfor)
 ```
 
-The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as $1 - \text{MSE}/\text{Var}(y)$. The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with decision forests.
+The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as 1 - MSE/Var(y). The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with decision forests.
 
 We conclude this episode with a series of challenges.
 
@@ -319,7 +319,7 @@ We conclude this episode with a series of challenges.
 > > 
 > > The top five most important variables are the same as in the classification
 > > model, but their order is slightly different. The variable `pH` seems to be
-> > relatively more important in the regression model.
+> > relatively more important in the classification model.
 > > 
 > {: .solution}
 {: .challenge}

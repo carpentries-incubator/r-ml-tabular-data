@@ -36,7 +36,7 @@ summary(exam)
 
 Given only this data frame, can we recover the grading scale that was used to assign the letter grades? In other words, can we *partition* this data set into A's and B's, based on the exam score? The `rpart` command can form this partition for us, using the formula syntax we saw in the last episode.
 
-```{r}
+```{r, fig.width = 8.5, fig.height = 4}
 library(rpart)
 library(rpart.plot)
 examTree <- rpart(grade ~ score, data = exam)
@@ -89,7 +89,7 @@ testDF <- kyphosis %>% slice(-trainIndex)
 
 Now train the decision tree model on the training set
 
-```{r}
+```{r, fig.width = 8.5, fig.height = 4}
 treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF)
 rpart.plot(treeModel, extra = 102)
 ```
@@ -179,7 +179,7 @@ In general, the accuracy on the testing set will be less than the accuracy on th
 >
 > > ## Solution
 > > 
-> > ```{r}
+> > ```{r, fig.width = 8.5, fig.height = 4}
 > > set.seed(314159) # try a different seed
 > > trainIndex <- sample(nrow(kyphosis), trainSize) # use the same size training set
 > > trainDF <- kyphosis %>% slice(trainIndex)
