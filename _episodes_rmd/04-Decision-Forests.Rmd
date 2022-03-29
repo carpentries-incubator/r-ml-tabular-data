@@ -1,19 +1,18 @@
 ---
 source: Rmd
-title: "Decision Forests"
-teaching: 50 
-exercises: 20
+title: "Random Forests"
+teaching: 45 
+exercises: 30
 questions:
-- "What are decision forests?"
-- "How can we use a decision tree model to make a prediction?"
-- "How do decision forests improve decision tree models?"
+- "What are random forests?"
+- "How do random forests improve decision tree models?"
 objectives:
-- "Introduce decision forests."
-- "Use decision forests for classification and regression models."
-- "Evaluate the quality of a decision forest model."
+- "Introduce random forests."
+- "Use random forests for classification and regression models."
+- "Evaluate the quality of a random forest model."
 keypoints:
-- "Decision forests can make predictions of a categorical or quantitative variable."
-- "Decision forests, with their default settings, work reasonably well."
+- "Random forests can make predictions of a categorical or quantitative variable."
+- "Random forests, with their default settings, work reasonably well."
 ---
 
 ```{r, include=FALSE}
@@ -21,13 +20,11 @@ source("../bin/chunk-options.R")
 knitr_fig_path("04-")
 ```
 
-## Decision Forests
-
-TODO:
+We saw in the previous episode that decision tree models can be sensitive to small changes in the training data. *Random Forests* mitigate this issue by forming an *ensemble* (i.e., set) of decision trees, and using them all together to make a prediction.
 
 ## Wine Dataset
 
-For this episode, we will use a data set described in the [article](https://doi.org/10.1016/j.dss.2009.05.016) *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
+For this episode, we will use a data set described in the [article](https://doi.org/10.1016/j.dss.2009.05.016) *Modeling wine preferences by data mining from physicochemical properties*, in Decision Support Systems, 47(4):547-553, by P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. (Instructions for downloading this data set are in the [setup page](setup.html).) The data set contains quality ratings and measurements from 6497 samples of wine; rows `1:1599` are red wine samples, and rows `1600:6497` are white wine. 
 
 ```{r, message=FALSE, results=FALSE, warning=FALSE}
 library(tidyverse)
@@ -39,239 +36,359 @@ wine <- read_csv(here("data", "wine.csv"))
 glimpse(wine)
 ggplot(wine, aes(x = quality)) + geom_histogram(binwidth = 1)
 ```
+The goal of the models that follow will be to predict the `quality` rating of a wine sample from its chemical properties.
 
 ## Red Wine Classification Model
 
+To illustrate classification models with this data set, let's create a categorical variable `grade` that will serve as a response variable.
+
 ```{r}
-redwineC <- wine %>%
-  slice(1:1599) %>%
+redwineClass <- wine %>%
+  slice(1:1599) %>%  # just the red wine samples
   mutate(grade = as_factor(if_else(quality < 5.5, "bad", "good"))) %>%  
-  select(-quality)
-summary(redwineC$grade)
+  select(-quality) # get rid of the quality variable
+summary(redwineClass$grade)
 ```
 
 ## Create Training and Test Sets
 
+Create training and test sets using an 80/20 split.
+
 ```{r}
-trainSize <- round(0.80 * nrow(redwineC))
+trainSize <- round(0.80 * nrow(redwineClass))
 set.seed(1234) 
-trainIndex <- sample(nrow(redwineC), trainSize)
-trainDF <- redwineC %>% slice(trainIndex)
-testDF <- redwineC %>% slice(-trainIndex)
-```
-
-## Fit a Decision Tree
-
-```{r}
-library(rpart)
-library(rpart.plot)
-rwtree <- rpart(grade ~ ., data = trainDF, method = "class")
-rpart.plot(rwtree)
+trainIndex <- sample(nrow(redwineClass), trainSize)
+trainDF <- redwineClass %>% slice(trainIndex)
+testDF <- redwineClass %>% slice(-trainIndex)
 ```
 
 
-```{r}
-rwp <- predict(rwtree, testDF)
-rwpred <- apply(rwp, 1, function(r) {names(which.max(r))})
-sum(testDF$grade == rwpred)/nrow(testDF)
-```
+> ## Challenge: Create a decision tree model
+>
+> Use the `rpart` function to create a decision tree model for predicting
+> the `grade` variable from the remaining columns in the `redwineClass`
+> data frame. Use the training and testing sets defined above. Compute
+> the testing set accuracy.
+>
+> > ## Solution
+> > 
+> > ```{r}
+> > library(rpart)
+> > library(rpart.plot)
+> > rwtree <- rpart(grade ~ ., data = trainDF)
+> > rpart.plot(rwtree)
+> > ```
+> > 
+> > ```{r}
+> > rwp <- predict(rwtree, testDF)
+> > rwpred <- ifelse(rwp[,1] > 0.5,  "bad", "good")
+> > sum(testDF$grade == rwpred)/nrow(testDF)
+> > ```
+> > 
+> > The decision tree model can correctly predict the grade about 70% of the time.
+> > 
+> {: .solution}
+{: .challenge}
 
-## Now do it with a random forest
+## Random Forest Classification Model
 
+A *random forest* model combines several decision tree models as follows.
+
+* Several different decision trees are built, each from a random bootstrap sample of the same size as the original data.
+* A randomly-chosen subset of variables is chosen to determine each split.
+* Each decision tree model makes a prediction, and the category with the most "votes" is selected as the prediction of the random forest.
+
+More details can be found in [Breiman's 2002 paper](https://www.stat.berkeley.edu/~breiman/Using_random_forests_V3.1.pdf), pages 8-9.
+
+The `randomForest` package is an R implementation of Breiman and Cutler's original Fortran code. The syntax for building a model is similar to `lm`, `glm`, and `rpart`. Because of the randomness used in the algorithm, it is good practice to set the random seed so that the results will be reproducible.
 
 ```{r}
 library(randomForest)
 set.seed(4567)
-rwfor <- randomForest(grade ~ ., data = trainDF)
-rwpred2 <- predict(rwfor, testDF)
-sum(testDF$grade == rwpred2)/nrow(testDF)
+redwineForest <- randomForest(grade ~ ., data = trainDF)
 ```
 
-
-## Examine our Random Forest
+The `predict` function works on random forests. Observe that it returns a vector of levels of the `grade` variable.
 
 ```{r}
-print(rwfor)
+rwpred2 <- predict(redwineForest, testDF)
+head(rwpred2)
 ```
+
+> ## Challenge: Accuracy of the Random Forest Model
+>
+> Compute the testing set accuracy of the random forest model above. Compare this
+> accuracy with the decision tree model in the previous challenge.
+>
+> > ## Solution
+> > 
+> > ```{r}
+> > sum(testDF$grade == rwpred2)/nrow(testDF)
+> > ```
+> > 
+> > The random forest model can correctly predict the grade about 82% of the time,
+> > which is an improvement of about 12 percentage points over the decision tree
+> > model.
+> > 
+> {: .solution}
+{: .challenge}
+
+## Out-of-bag Error
+
+Since each tree in the random forest is built on a bootstrap sample of the rows in the training set, some rows will be left out of each sample. Each tree can then make a prediction on each row that was excluded, i.e., "out of the bag" (OOB). Each row will be excluded by several trees, which form a subforest that produces an aggregate prediction for each row. The *out-of-bag estimate* of the error rate is the error rate of these predictions. The OOB error rate gives a convenient estimate of the error rate of the model (error = 1 - accuracy). The `print` function reports the OOB error.
+
+```{r}
+print(redwineForest)
+```
+
+The *confusion matrix* gives further details on how the OOB error was calculated: Out of 470+119 bad wines, 119 were classified as good, and out of 126+564 good wines, 126 were classified as bad. Check that (119+126)/(470+119+126+564) = 0.1916.
 
 ## Train on the whole data set
 
+Given that OOB error gives us a good way to estimate model accuracy, we can train random forest models on the entire data set, without using a train/test split [(Breiman, 2001, p. 8)](https://www.stat.berkeley.edu/%7Ebreiman/randomforest2001.pdf).
+
 ```{r}
-set.seed(567)
-rwforFull <- randomForest(grade ~ ., data = redwineC)
+set.seed(4567)
+rwforFull <- randomForest(grade ~ ., data = redwineClass)
 print(rwforFull)
 ```
 
+*Caveat:* If you plan to "tune" your model by adjusting the optional parameters in `randomForest`, it is still good practice to set aside a testing set for assessing model accuracy after the model has been tuned using only the training data.
+
 ## Variable Importance
 
+The out-of-bag errors can also be used to assess the importance of each explanatory variable in contributing to the accuracy of the model. If we set `importance = TRUE` in a call to `randomForest`, the function will keep track of how much the OOB accuracy decreases when each variable is randomly permuted. Scrambling a variable in this way effectively removes its predictive power from the model, so we would expect the most important variables to have the greatest decreases in accuracy.
+
 ```{r}
-importance(rwforFull)
-importance(rwforFull) %>% 
-  as_tibble(rownames = "Variable") %>% 
-  arrange(desc(MeanDecreaseGini))
+set.seed(2345)
+rwforFull <- randomForest(grade ~ ., data = redwineClass, importance = TRUE)
+importance(rwforFull, type = 1)
 ```
+
+> ## Challenge: Most and Least Important
+>
+> Based on the Mean Decrease in Accuracy,
+> Which two variables are the most important, and which two are the least 
+> important? Are these results consistent with the decision tree model you
+> constructed in the first challence of this episode?
+>
+> > ## Solution
+> >
+> > For convenience, let's sort the rows of the importance matrix.
+> > 
+> > ```{r}
+> > importance(rwforFull, type = 1) %>% 
+> > as_tibble(rownames = "Variable") %>% 
+> >   arrange(desc(MeanDecreaseAccuracy))
+> > ```
+> > 
+> > The top two variables are `alcohol` and `sulphates`, which both occur near
+> > the root of the decision tree. The least important variables are `free.sulfur.dioxide`
+> > and `residual.sugar`, which do not occur in the decision tree. So it seems 
+> > consistent that the important variables play important roles in the decision 
+> > tree, while the unimportant variables do not.
+> > 
+> {: .solution}
+{: .challenge}
 
 ## Red Wine Regression Model
 
+So far, we have applied decision trees and random forests to classification problems, where the dependent variable is categorical. These techniques also apply to regression problems, where we are predicting a quantitative variable.
+
+Recall that in the original `wine` data set, there is a variable called `quality` that assigns each sample a numerical quality score. For the examples that follow, we will treat `quality` as a quantitative variable. As before, we select the rows that contain observations of red wines, and we form training and testing sets.
+
 ```{r}
-redwineR <- wine %>% slice(1:1599) 
-trainSize <- round(0.80 * nrow(redwineR))
-set.seed(124) 
-trainIndex <- sample(nrow(redwineR), trainSize)
-trainDF <- redwineR %>% slice(trainIndex)
-testDF <- redwineR %>% slice(-trainIndex)
+redwine <- wine %>% slice(1:1599) 
+trainSize <- round(0.80 * nrow(redwine))
+set.seed(1234) 
+trainIndex <- sample(nrow(redwine), trainSize)
+trainDF <- redwine %>% slice(trainIndex)
+testDF <- redwine %>% slice(-trainIndex)
 ```
 
 ## Fit a Decision Tree
 
-When the dependent variable is quantitative, we use the `anova` method to construct a decision tree.
+When the dependent variable is quantitative, we use the `method = anova` option in `rpart` to construct a decision tree. In this situation, the predicted value corresponding to each node is the mean value of the observations assigned to the node, and the algorithm searches for a split that minimizes the sum of the squared errors of these predictions.
 
 ```{r}
 rwtree <- rpart(quality ~ ., data = trainDF, method = "anova")
 rpart.plot(rwtree)
 ```
 
+> ## Challenge: Check the Splits
+>
+> In the above decision tree, consider the root (5.6), its left child (5.4),
+> and the leftmost leaf (5.2). Check that these numbers are in fact the average
+> `quality` values (rounded to one decimal place) of the observations in `trainDF` 
+> that are assigned to each node.
+>
+> > ## Solution
+> >
+> > The root node contains all the observations, so compute its mean `quality` value.
+> > 
+> > ```{r}
+> > mean(trainDF$quality)
+> > ```
+> > 
+> > The left child of the root contains observations where `alcohol` is less than 11.
+> > 
+> > ```{r}
+> > trainDF %>% 
+> >   filter(alcohol<11) %>% 
+> >   summarize(nodeValue = mean(quality))
+> > ```
+> > 
+> > The leftmost leaf contains observations where `alcohol` is less than 11 and
+> > `sulphates` is less than 0.58. 
+> > 
+> > ```{r}
+> > trainDF %>% 
+> >   filter(alcohol<11, sulphates < 0.58) %>% 
+> >   summarize(nodeValue = mean(quality))
+> > ```
+> > 
+> {: .solution}
+{: .challenge}
+
 ## Decision Tree RMSE
 
-```{r}
-predQualDT <- predict(rwtree, testDF)
-dtErrors <- predQualDT - testDF$quality
-dtRMSE <- sqrt(mean(dtErrors^2))
-dtRMSE
-```
-
-## Plot Residuals vs. Fitted
+For regression trees, each leaf is assigned a predicted value, and the `predict` function selects the appropriate leaf/prediction based on the values of the explanatory variables.
 
 ```{r}
-tibble(`Predicted Quality` = predQualDT, Error = dtErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_jitter(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
+predictedQuality <- predict(rwtree, testDF)
+head(predictedQuality)
 ```
 
+Since this is a regression model, we assess its accuracy using the root mean squared error (RMSE).
 
+```{r}
+errors <- predictedQuality - testDF$quality
+decTreeRMSE <- sqrt(mean(dtErrors^2))
+decTreeRMSE
+```
 
 ## Random Forest Regression Model
 
+Constructing a random forest regression model uses `randomForest` with the same syntax as we used for classification models. The only difference is that the response variable `quality` in our formula is a quantitative variable. The predicted values given by `predict` are the average predictions of all the trees in the forest.
 
 ```{r}
 set.seed(4567)
 rwfor <- randomForest(quality ~ ., data = trainDF)
-print(rwfor)
-```
-
-The `% Var explained` term is a "pseudo R-squared", computed as $1 - \text{MSE}/\text{Var}(y)$.
-The mean of squared residuals is based on the errors for the entire training set. Note that it's square root is close to the RMSE we calculated on the test set. 
-
-```{r}
 predQualRF <- predict(rwfor, testDF) 
 rfErrors <- predQualRF - testDF$quality
 rfRMSE <- sqrt(mean(rfErrors^2))
 rfRMSE
-rfRMSE^2
 ```
 
-You can also view the out-of-bag errors. The average OOB MSE is close to the MSE on the training set. So again, you don't really need a train-test split when working with decision forests.
+The random forest RMSE is better (smaller) than the decision tree RMSE.
 
 ```{r}
-mean(rwfor$mse)
-```
-
-### Plot the errors
-
-```{r}
-tibble(`Predicted Quality` = predQualRF, Error = rfErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_jitter(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-```
-
-## Variable Importance
-
-```{r}
-importance(rwfor)
-importance(rwfor) %>% 
-  as_tibble(rownames = "Variable") %>% 
-  arrange(desc(IncNodePurity))
-```
-
-## Linear Regression Model (Optional)
-
-```{r}
-redwine.lm <- lm(quality ~ ., data = trainDF)
-summary(redwine.lm)
-lmRMSE <- sqrt(mean((predict(redwine.lm, testDF) - testDF$quality)^2))
-lmRMSE
-```
-
-Challenge: Train a random forest on entire `redwineR` dataset. Do the MSE and pseudo R-squared improve?
-
-Solution:
-
-```{r, eval = FALSE}
-set.seed(4567)
-rwfor <- randomForest(quality ~ ., data = redwineR)
 print(rwfor)
 ```
 
+The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as $1 - \text{MSE}/\text{Var}(y)$. The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with decision forests.
 
-Challenge? White wine decision forest regression model (whole dataset). Are the important variables different for ratings of white wine? also try with just train and test.
+We conclude this episode with a series of challenges.
 
-Solution:
+> ## Challenge: Variable Importance
+>
+> As with classification models, setting `importance = TRUE` in a call to `randomForest`
+> will use the OOB errors to measure variable importance. In the regression case,
+> the decrease in accuracy when a variable is permuted is measured by the percentage
+> increase in MSE (`%IncMSE`). The larger the `%IncMSE`, the more important the
+> variable.
+>
+> Compute the `%IncMSE` variable importance for the red wine regression model,
+> and sort the variables by their importance. Re-train the model on the 
+> entire `redwine` data set instead of on the testing set. 
+> Are the most important variables the same as in the classification model?
+>
+> > ## Solution
+> >
+> > The syntax is almost identical to the classification case. Since the 
+> > identifier `%IncMSE` contains special characters, it must be enclosed
+> > in backticks.
+> > 
+> > ```{r}
+> > set.seed(2345)
+> > rwFull <- randomForest(quality ~ ., data = redwine, importance = TRUE)
+> > importance(rwFull, type = 1) %>%
+> >   as_tibble(rownames = "Variable") %>% 
+> >   arrange(desc(`%IncMSE`))
+> > ```
+> > 
+> > The top five most important variables are the same as in the classification
+> > model, but their order is slightly different. The variable `pH` seems to be
+> > relatively more important in the regression model.
+> > 
+> {: .solution}
+{: .challenge}
 
-Using train/test sets:
+> ## Challenge: Linear Regression Model
+>
+> In Episode 2, we used the `lm` function to fit a linear model to the 
+> training set, and then we computed the RMSE on the testing set. Repeat
+> this process for the `redwine` data set. How does the linear regression
+> RMSE compare to the random forest RMSE? Compare the `summary` of your 
+> linear model with the variable importance rankings from the previous
+> challenge.
+>
+> > ## Solution
+> >
+> > ```{r}
+> > redwine.lm <- lm(quality ~ ., data = trainDF)
+> > lmRMSE <- sqrt(mean((predict(redwine.lm, testDF) - testDF$quality)^2))
+> > lmRMSE
+> > ```
+> >
+> > The random forest RMSE is less than the linear model RMSE.
+> > 
+> > ```{r}
+> > summary(redwine.lm)
+> > ```
+> >
+> > The variables the smallest p-values (`Pr(>|t|)`) tend to correspond to 
+> > the most important variables in the random forest model. 
+> > 
+> {: .solution}
+{: .challenge}
 
-```{r, eval = FALSE}
-whitewine <- wine %>% slice(1600:6497) 
-trainSize <- round(0.80 * nrow(whitewine))
-set.seed(1234) 
-trainIndex <- sample(nrow(whitewine), trainSize)
-trainDF <- whitewine %>% dplyr::slice(trainIndex)
-testDF <- whitewine %>% dplyr::slice(-trainIndex)
-wwfor <- randomForest(quality ~ ., data = trainDF)
-predQualRF <- predict(wwfor, testDF) 
-rfErrors <- predQualRF - testDF$quality
-rfRMSE <- sqrt(mean(rfErrors^2))
-```
+> ## Challenge: White Wine
+>
+> Rows 1600-6497 of the `wine` data frame correspond to white wine observations.
+> Use these rows to train and test a random forest model, as we did with the
+> red wine observations. Compute a testing set RMSE, and assess variable
+> importance. Are the important variables for predicting white wine quality
+> the same as the important variables for predicting red wine quality?
+>
+> > ## Solution
+> > 
+> > ```{r, eval = FALSE}
+> > whitewine <- wine %>% slice(1600:6497) 
+> > trainSize <- round(0.80 * nrow(whitewine))
+> > set.seed(1234) 
+> > trainIndex <- sample(nrow(whitewine), trainSize)
+> > trainDF <- whitewine %>% dplyr::slice(trainIndex)
+> > testDF <- whitewine %>% dplyr::slice(-trainIndex)
+> > wwfor <- randomForest(quality ~ ., data = trainDF)
+> > predQualww <- predict(wwfor, testDF) 
+> > errors <- predQualww - testDF$quality
+> > wwRMSE <- sqrt(mean(errors^2))
+> > ```
+> >
+> > The RMSE on the white wine testing set is about 0.63.
+> > 
+> > ```{r, eval = FALSE}
+> > set.seed(4567)
+> > wwforFull <- randomForest(quality ~ ., data = whitewine, importance = TRUE)
+> > importance(wwforFull, type = 1) %>% 
+> >   as_tibble(rownames = "Variable") %>% 
+> >   arrange(desc(`%IncMSE`))
+> > ```
+> > 
+> > Relative to red wine, `free.sulfur.dioxide` is much more important for
+> > predicting white wine quality, and `sulphates` is less important.
+> > 
+> {: .solution}
+{: .challenge}
 
-random forest rmse: 0.631
-
-```{r, eval = FALSE}
-set.seed(4567)
-wwforFull <- randomForest(quality ~ ., data = whitewine)
-print(wwforFull)
-importance(wwforFull) %>% 
-  as_tibble(rownames = "Variable") %>% 
-  arrange(desc(IncNodePurity))
-```
-
-For comparison: linear model:
-
-```{r, eval = FALSE}
-whitewine.lm <- lm(quality ~ ., data = trainDF)
-lmRMSE <- sqrt(mean((predict(whitewine.lm, testDF) - testDF$quality)^2))
-```
-
-linear model rmse: 0.7942
-
-Note: We have correlated variables in this data set. Random forests handle them fairly well.
-
-Challenge: Try increasing `mtry` and `ntree`. Do the results improve?
-
-Solution:
-
-```{r eval=FALSE}
-set.seed(4567)
-wwfor <- randomForest(quality ~ ., data = whitewineR, mtry = 5)
-print(wwfor)
-```
-
-```{r eval=FALSE}
-set.seed(4567)
-wwfor <- randomForest(quality ~ ., data = whitewineR, ntree = 1000)
-print(wwfor)
-```
-
-Neither of the above changes has much of an effect.

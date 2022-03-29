@@ -201,6 +201,7 @@ One way to measure the accuracy of a classification model is to report the propo
 ```{r}
 accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
 cat("Proportion of correct predictions using testing data: ", accuracy, "\n")
+cat("Testing data error rate: ", 1-accuracy, "\n")
 ```
 
 > ## Challenge: Try different train/test splits

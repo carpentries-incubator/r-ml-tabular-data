@@ -378,6 +378,20 @@ Proportion of correct predictions using testing data:  0.8
 ~~~
 {: .output}
 
+
+
+~~~
+cat("Testing data error rate: ", 1-accuracy, "\n")
+~~~
+{: .language-r}
+
+
+
+~~~
+Testing data error rate:  0.2 
+~~~
+{: .output}
+
 > ## Challenge: Try different train/test splits
 >
 > Before we constructed the models in this episode, we divided the data into 

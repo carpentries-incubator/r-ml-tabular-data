@@ -29,7 +29,7 @@ Let's simulate a data set of exam scores, along with letter grades.
 library(tidyverse)
 set.seed(456)
 exam <- tibble(score = sample(80:100, 200, replace = TRUE)) %>%
-  mutate(grade = factor(ifelse(score < 90, "B", "A")))
+  mutate(grade = as_factor(ifelse(score < 90, "B", "A")))
 head(exam)
 summary(exam)
 ~~~
@@ -48,7 +48,7 @@ rpart.plot(examTree)
 
 <img src="../fig/rmd-03-unnamed-chunk-3-1.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" width="612" style="display: block; margin: auto;" />
 
-The `rpart` function searches for the best way to split the data set, based on the explanatory variables. This [Introduction to Rpart](https://cran.r-project.org/web/packages/rpart/vignettes/longintro.pdf) has details on how the split is chosen. In this simple case, the `rpart` function was able to perfectly partition the data after only one split. We can tell `rpart.plot` to report the number of correctly-classified cases in each node by including the option `extra = 102`.
+The `rpart` function searches for the best way to split the data set into predicted values of the response variables, based on the explanatory variables. This [Introduction to Rpart](https://cran.r-project.org/web/packages/rpart/vignettes/longintro.pdf) has details on how the split is chosen. In this simple case, the `rpart` function was able to perfectly partition the data after only one split. We can tell `rpart.plot` to report the number of correctly-classified cases in each node by including the option `extra = 102`.
 
 
 ~~~
