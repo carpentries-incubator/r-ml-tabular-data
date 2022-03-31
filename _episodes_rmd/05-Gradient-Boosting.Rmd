@@ -1,15 +1,19 @@
 ---
 source: Rmd
 title: "Gradient Boosted Trees"
-teaching: 50 
-exercises: 15
+teaching: 45 
+exercises: 20
 questions:
 - "What is gradient boosting?"
-- "TODO"
+- "How can we train an XGBoost model?"
+- "What is the learning rate?"
 objectives:
-- "TODO"
+- "Introduce XGBoost models."
+- "Train regression models using XGBoost"
+- "Explore the effect of learning rate on the training process."
 keypoints:
-- "TODO"
+- "Gradient boosted trees can be used for the same types of problems that random forests can solve."
+- "The learning rate can affect the performance of a machine learning algorithm."
 ---
 
 ```{r, include=FALSE}
@@ -19,10 +23,11 @@ knitr_fig_path("05-")
 
 ## Gradient Boosted Trees
 
-TODO: 
+A random forest is called an *ensemble* method, because it combines the results of a set of trees to form a single prediction. *Gradient boosted trees* are also ensemble methods, but instead of forming a forest of trees from different random samples, they grow successive trees that systematically reduce the error of the model at each iteration.
 
+We will be using the R package `xgboost`, which gives a fast, scalable implementation of a gradient boosting framework. For more information on how `xgboost` works, see the [XGBoost Presentation](https://cran.r-project.org/web/packages/xgboost/vignettes/xgboostPresentation.html) vignette and the [Introduction to Boosted Trees](https://xgboost.readthedocs.io/en/stable/tutorials/model.html) tutorial in the XGBoost documentation.
 
-## Reload the red wine data
+## Reload the Red Wine Data
 
 ```{r, message=FALSE, results=FALSE, warning=FALSE}
 library(tidyverse)
@@ -45,110 +50,174 @@ trainDF <- redwine %>% dplyr::slice(trainIndex)
 testDF <- redwine %>% dplyr::slice(-trainIndex)
 ```
 
-## Gradient Boosted Regression Model
+The `xgboost` package defines a data structure called `xgb.DMatrix` that optimizes storage and retrieval. To use the advanced features of `xgboost`, it is necessary to convert our training and test sets to the `xgb.DMatrix` class.
 
 ```{r}
-gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality, nrounds = 50)
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
 ```
 
-```{r}
-pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
-gbErrors <- pQuality - testDF$quality
-gbRMSE <- sqrt(mean(gbErrors^2))
-gbRMSE
-```
+## Training an XGBoost Model
+
+Since we specified a `label` in our `dtrain` and `dtest` matrices, there is no need to specify a formula when training a model using `xgb.train`. The label that we specified (quality rating) will be the response variable, and the columns of the `data` that we specified will be the explanatory variables. One option that we must specify is `nrounds`, which restricts the number of boosting iterations the algorithm will make.
 
 ```{r}
-tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
+redwineXGB <- xgb.train(data = dtrain, nrounds = 10)
+```
+
+Let's calculate the RMSE on our testing set. The `predict` function for XGBoost models expects a matrix, so we pass it the `xgb.DMatrix` that we created from our testing set. 
+
+```{r}
+pQuality <- predict(redwineXGB, dtest)
+errors <- pQuality - testDF$quality
+sqrt(mean(errors^2)) #RMSE
 ```
 
 ## More Details on the Training Process
 
-```{r}
-dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
-dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
-watch <- list(train = dtrain, test = dtest)
-```
+The `xgb.train` command will automatically calculate the RMSE on our testing set after each iteration if we set the testing set in the `watchlist`.
 
 ```{r}
-gbm <- xgb.train(data = dtrain, watchlist = watch, nrounds = 50)
+redwineXGB <- xgb.train(data = dtrain, watchlist = list(test = dtest), nrounds = 10)
 ```
 
+The training history is saved as a data frame in the variable `gbm$evaluation_log`, so we can plot how the RMSE changes during the training process.
+
 ```{r}
-gbm$evaluation_log %>% 
+redwineXGB$evaluation_log %>%
+  ggplot(aes(x = iter, y = test_rmse)) +
+  geom_line()
+```
+
+
+> ## Challenge: How many boosting iterations?
+>
+> Experiment with different values of `nrounds` in the above call to `xgb.train`.
+> Does the accuracy of the model improve with more iterations? Is there a point 
+> after which the model ceases to improve?
+>
+> > ## Solution
+> > 
+> > The accuracy of the model doesn't appear to improve after iteration 14.
+> >
+> > ```{r}
+> > redwineXGB <- xgb.train(data = dtrain, 
+> >                         watchlist = list(test = dtest), 
+> >                         nrounds = 20)
+> > redwineXGB$evaluation_log %>%
+> >   ggplot(aes(x = iter, y = test_rmse)) +
+> >   geom_line() 
+> > ```
+> > 
+> {: .solution}
+{: .challenge}
+
+## Learning Rate
+
+Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a parameter that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum answer.
+
+In XGBoost, the parameter that controls the learning rate is called `eta`. It's default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
+
+The following code will set `eta` to its default value. We include a value for `early_stopping_rounds`, which will halt the training after a specified number of iterations pass without improvement. When using `early_stopping_rounds`, `nrounds` can be set to a very large number. To avoid printing too many lines of output, we also set a value for `print_every_n`.
+
+```{r}
+redwineXGB <- xgb.train(data = dtrain, 
+                        params = list(eta = 0.3),
+                        watchlist = list(test = dtest), 
+                        nrounds = 1000,
+                        early_stopping_rounds = 10,
+                        print_every_n = 5)
+```
+
+The 14th iteration had the smallest RMSE, as we found in the previous challenge.
+
+> ## Challenge: Experiment with the learning rate.
+>
+> Experiment with different values of `eta` in the above call to `xgb.train`.
+> Notice how smaller values of eta require more iterations. Can you find a 
+> value of `eta` that results in a lower testing set RMSE than the default?
+>
+> > ## Solution
+> > 
+> > A learning rate around 0.1 reduces the RMSE somewhat.
+> >
+> > ```{r}
+> > redwineXGB <- xgb.train(data = dtrain, 
+> >                         params = list(eta = 0.1),
+> >                         watchlist = list(test = dtest), 
+> >                         nrounds = 1000,
+> >                         early_stopping_rounds = 10,
+> >                         print_every_n = 15)
+> > ```
+> > 
+> {: .solution}
+{: .challenge}
+
+## Variable Importance
+
+As with random forests, you can view the predictive importance of each explanatory variable.
+
+```{r}
+xgb.importance(model = redwineXGB)
+```
+
+The rows are sorted by `Gain`, which measures the accuracy improvement contributed by a feature based on all the splits it determines. Note that the sum of all the gains is 1.
+
+## Training Accuracy vs. Testing Accuracy
+
+Like many machine learning algorithms, gradient boosting operates by minimizing the error on the training set. However, we evaluate its accuracy by computing the error on the testing set. These two errors are usually different, and it is not uncommon to have much lower training RMSE than testing RMSE. 
+
+To see both training and testing errors, we can add a `train` item to the `watchlist`.
+
+```{r}
+redwineXGB <- xgb.train(data = dtrain, 
+                        params = list(eta = 0.1),
+                        watchlist = list(train = dtrain, test = dtest), 
+                        nrounds = 1000,
+                        early_stopping_rounds = 10,
+                        print_every_n = 15)
+xgb.importance(model = redwineXGB)
+redwineXGB$evaluation_log %>% 
   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
 ```
 
-
-## Overfitting
-
-The RMSE on the training set is much smaller than the RMSE on the test set, so our model is *overfitting*. 
-
-```{r}
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 140,
-               max_depth = 3,
-               eta = 0.03,
-               )
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbm$evaluation_log)
-```
-
-TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak max_depth, eta, and nrounds. Possible solution above.
-
-```{r}
-pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
-gbErrors <- pQuality - testDF$quality
-tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-```
+Notice that beyond iteration 40 or so, the training RMSE continues to decrease while the testing RMSE has basically stabilized. This divergence indicates that the later training iterations are improving the model based on the particularities of the training set, but in a way that does not generalize to the testing set.
 
 
-TODO: Challenge: Try with white wine data.
+> ## Challenge: White Wine
+>
+> Build an XGBoost model for the white wine data (rows 600-6497) of the
+> `wine` data frame. Compare the accuracy and variable importance with 
+> the random forest white wine model from the previous episode.
+>
+> > ## Solution
+> >
+> > ```{r, eval = FALSE}
+> > whitewine <- wine %>% dplyr::slice(1600:6497) 
+> > trainSize <- round(0.80 * nrow(whitewine))
+> > set.seed(1234) 
+> > trainIndex <- sample(nrow(whitewine), trainSize)
+> > trainDF <- whitewine %>% dplyr::slice(trainIndex)
+> > testDF <- whitewine %>% dplyr::slice(-trainIndex)
+> > dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+> > dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+> > whitewineXGB <- xgb.train(data = dtrain, 
+> >                           params = list(eta = 0.1),
+> >                           watchlist = list(train = dtrain, test = dtest), 
+> >                           nrounds = 1000,
+> >                           early_stopping_rounds = 10,
+> >                           print_every_n = 20)
+> > xgb.importance(model = whitewineXGB)
+> > whitewineXGB$evaluation_log %>% 
+> >   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+> >   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+> > ```
+> > 
+> > The testing set accuracy is slightly worse than what we obtained in the 
+> > random forest model. The important explanatory variables are similar.
+> > 
+> {: .solution}
+{: .challenge}
 
-```{r, eval = FALSE}
-whitewine <- wine %>% dplyr::slice(1600:6497) 
-trainSize <- round(0.80 * nrow(whitewine))
-set.seed(1234) 
-trainIndex <- sample(nrow(whitewine), trainSize)
-trainDF <- whitewine %>% dplyr::slice(trainIndex)
-testDF <- whitewine %>% dplyr::slice(-trainIndex)
-dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
-dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
-watch <- list(train = dtrain, test = dtest)
-```
-
-```{r, eval = FALSE}
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 150,
-               max_depth = 3,
-               eta = 0.03,
-               )
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbm$evaluation_log)
-```
-
-Note: Using linear boosting doesn't improve things.
-
-```{r, eval = FALSE}
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-                 booster = "gblinear", eta = 0.02,
-               nrounds = 150
-               )
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbm$evaluation_log)
-```
+So far, our XGBoost models have performed slightly worse than the equivalent random forest models. In the next episode we will explore ways to improve these results.

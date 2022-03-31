@@ -161,52 +161,6 @@ The `randomForest` package is an R implementation of Breiman and Cutler's origin
 
 ~~~
 library(randomForest)
-~~~
-{: .language-r}
-
-
-
-~~~
-randomForest 4.7-1
-~~~
-{: .output}
-
-
-
-~~~
-Type rfNews() to see new features/changes/bug fixes.
-~~~
-{: .output}
-
-
-
-~~~
-
-Attaching package: 'randomForest'
-~~~
-{: .output}
-
-
-
-~~~
-The following object is masked from 'package:dplyr':
-
-    combine
-~~~
-{: .output}
-
-
-
-~~~
-The following object is masked from 'package:ggplot2':
-
-    margin
-~~~
-{: .output}
-
-
-
-~~~
 set.seed(4567)
 redwineForest <- randomForest(grade ~ ., data = trainDF)
 ~~~
@@ -389,8 +343,8 @@ alcohol                          75.06260
 > > {: .output}
 > > 
 > > The top two variables are `alcohol` and `sulphates`, which both occur near
-> > the root of the decision tree. The least important variables are `free.sulfur.dioxide`
-> > and `residual.sugar`, which do not occur in the decision tree. So it seems 
+> > the root of the decision tree. The least important variables are `residual.sugar`
+> > and `citric.acid`, which do not occur in the decision tree. So it seems 
 > > consistent that the important variables play important roles in the decision 
 > > tree, while the unimportant variables do not.
 > > 
@@ -416,7 +370,7 @@ testDF <- redwine %>% slice(-trainIndex)
 
 ## Fit a Decision Tree
 
-When the dependent variable is quantitative, we use the `method = anova` option in `rpart` to construct a decision tree. In this situation, the predicted value corresponding to each node is the mean value of the observations assigned to the node, and the algorithm searches for a split that minimizes the sum of the squared errors of these predictions.
+When the dependent variable is quantitative, we use the `method = "anova"` option in `rpart` to construct a decision tree. In this situation, the predicted value corresponding to each node is the mean value of the observations assigned to the node, and the algorithm searches for a split that minimizes the sum of the squared errors of these predictions.
 
 
 ~~~
@@ -456,7 +410,7 @@ rpart.plot(rwtree)
 > > 
 > > ~~~
 > > trainDF %>% 
-> >   filter(alcohol<11) %>% 
+> >   filter(alcohol < 11) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ~~~
 > > {: .language-r}
@@ -477,7 +431,7 @@ rpart.plot(rwtree)
 > > 
 > > ~~~
 > > trainDF %>% 
-> >   filter(alcohol<11, sulphates < 0.58) %>% 
+> >   filter(alcohol < 11, sulphates < 0.58) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ~~~
 > > {: .language-r}
@@ -519,20 +473,7 @@ Since this is a regression model, we assess its accuracy using the root mean squ
 
 ~~~
 errors <- predictedQuality - testDF$quality
-decTreeRMSE <- sqrt(mean(dtErrors^2))
-~~~
-{: .language-r}
-
-
-
-~~~
-Error in mean(dtErrors^2): object 'dtErrors' not found
-~~~
-{: .error}
-
-
-
-~~~
+decTreeRMSE <- sqrt(mean(errors^2))
 decTreeRMSE
 ~~~
 {: .language-r}
@@ -540,9 +481,9 @@ decTreeRMSE
 
 
 ~~~
-Error in eval(expr, envir, enclos): object 'decTreeRMSE' not found
+[1] 0.6862169
 ~~~
-{: .error}
+{: .output}
 
 ## Random Forest Regression Model
 
@@ -589,7 +530,7 @@ No. of variables tried at each split: 3
 ~~~
 {: .output}
 
-The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as $1 - \text{MSE}/\text{Var}(y)$. The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with decision forests.
+The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as 1 - MSE/Var(y). The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with decision forests.
 
 We conclude this episode with a series of challenges.
 
@@ -644,7 +585,7 @@ We conclude this episode with a series of challenges.
 > > 
 > > The top five most important variables are the same as in the classification
 > > model, but their order is slightly different. The variable `pH` seems to be
-> > relatively more important in the regression model.
+> > relatively more important in the classification model.
 > > 
 > {: .solution}
 {: .challenge}

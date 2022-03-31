@@ -3,25 +3,30 @@
 # Instead, please edit 05-Gradient-Boosting.md in _episodes_rmd/
 source: Rmd
 title: "Gradient Boosted Trees"
-teaching: 50 
-exercises: 15
+teaching: 45 
+exercises: 20
 questions:
 - "What is gradient boosting?"
-- "TODO"
+- "How can we train an XGBoost model?"
+- "What is the learning rate?"
 objectives:
-- "TODO"
+- "Introduce XGBoost models."
+- "Train regression models using XGBoost"
+- "Explore the effect of learning rate on the training process."
 keypoints:
-- "TODO"
+- "Gradient boosted trees can be used for the same types of problems that random forests can solve."
+- "The learning rate can affect the performance of a machine learning algorithm."
 ---
 
 
 
 ## Gradient Boosted Trees
 
-TODO: 
+A random forest is called an *ensemble* method, because it combines the results of a set of trees to form a single prediction. *Gradient boosted trees* are also ensemble methods, but instead of forming a forest of trees from different random samples, they grow successive trees that systematically reduce the error of the model at each iteration.
 
+We will be using the R package `xgboost`, which gives a fast, scalable implementation of a gradient boosting framework. For more information on how `xgboost` works, see the [XGBoost Presentation](https://cran.r-project.org/web/packages/xgboost/vignettes/xgboostPresentation.html) vignette and the [Introduction to Boosted Trees](https://xgboost.readthedocs.io/en/stable/tutorials/model.html) tutorial in the XGBoost documentation.
 
-## Reload the red wine data
+## Reload the Red Wine Data
 
 
 ~~~
@@ -67,276 +72,353 @@ testDF <- redwine %>% dplyr::slice(-trainIndex)
 ~~~
 {: .language-r}
 
-## Gradient Boosted Regression Model
+The `xgboost` package defines a data structure called `xgb.DMatrix` that optimizes storage and retrieval. To use the advanced features of `xgboost`, it is necessary to convert our training and test sets to the `xgb.DMatrix` class.
 
 
 ~~~
-gbm <- xgboost(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality, nrounds = 50)
+dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+~~~
+{: .language-r}
+
+## Training an XGBoost Model
+
+Since we specified a `label` in our `dtrain` and `dtest` matrices, there is no need to specify a formula when training a model using `xgb.train`. The label that we specified (quality rating) will be the response variable, and the columns of the `data` that we specified will be the explanatory variables. One option that we must specify is `nrounds`, which restricts the number of boosting iterations the algorithm will make.
+
+
+~~~
+redwineXGB <- xgb.train(data = dtrain, nrounds = 10)
+~~~
+{: .language-r}
+
+Let's calculate the RMSE on our testing set. The `predict` function for XGBoost models expects a matrix, so we pass it the `xgb.DMatrix` that we created from our testing set. 
+
+
+~~~
+pQuality <- predict(redwineXGB, dtest)
+errors <- pQuality - testDF$quality
+sqrt(mean(errors^2)) #RMSE
 ~~~
 {: .language-r}
 
 
 
 ~~~
-[1]	train-rmse:3.676364 
-[2]	train-rmse:2.617381 
-[3]	train-rmse:1.884501 
-[4]	train-rmse:1.380320 
-[5]	train-rmse:1.040359 
-[6]	train-rmse:0.812738 
-[7]	train-rmse:0.661508 
-[8]	train-rmse:0.563880 
-[9]	train-rmse:0.499910 
-[10]	train-rmse:0.455213 
-[11]	train-rmse:0.427036 
-[12]	train-rmse:0.399291 
-[13]	train-rmse:0.388654 
-[14]	train-rmse:0.368818 
-[15]	train-rmse:0.361202 
-[16]	train-rmse:0.347489 
-[17]	train-rmse:0.333721 
-[18]	train-rmse:0.327205 
-[19]	train-rmse:0.322311 
-[20]	train-rmse:0.311274 
-[21]	train-rmse:0.306126 
-[22]	train-rmse:0.304587 
-[23]	train-rmse:0.302227 
-[24]	train-rmse:0.291819 
-[25]	train-rmse:0.283164 
-[26]	train-rmse:0.274758 
-[27]	train-rmse:0.263478 
-[28]	train-rmse:0.261211 
-[29]	train-rmse:0.252939 
-[30]	train-rmse:0.242802 
-[31]	train-rmse:0.235155 
-[32]	train-rmse:0.223787 
-[33]	train-rmse:0.215584 
-[34]	train-rmse:0.210648 
-[35]	train-rmse:0.207097 
-[36]	train-rmse:0.205686 
-[37]	train-rmse:0.203362 
-[38]	train-rmse:0.195475 
-[39]	train-rmse:0.192458 
-[40]	train-rmse:0.188874 
-[41]	train-rmse:0.183996 
-[42]	train-rmse:0.178708 
-[43]	train-rmse:0.170608 
-[44]	train-rmse:0.165917 
-[45]	train-rmse:0.158432 
-[46]	train-rmse:0.152803 
-[47]	train-rmse:0.149589 
-[48]	train-rmse:0.147823 
-[49]	train-rmse:0.147145 
-[50]	train-rmse:0.141775 
+[1] 0.6653935
 ~~~
 {: .output}
-
-
-~~~
-pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
-gbErrors <- pQuality - testDF$quality
-gbRMSE <- sqrt(mean(gbErrors^2))
-gbRMSE
-~~~
-{: .language-r}
-
-
-
-~~~
-[1] 0.6489389
-~~~
-{: .output}
-
-
-~~~
-tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-~~~
-{: .language-r}
-
-<img src="../fig/rmd-05-unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" width="612" style="display: block; margin: auto;" />
 
 ## More Details on the Training Process
 
-
-~~~
-dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
-dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
-watch <- list(train = dtrain, test = dtest)
-~~~
-{: .language-r}
+The `xgb.train` command will automatically calculate the RMSE on our testing set after each iteration if we set the testing set in the `watchlist`.
 
 
 ~~~
-gbm <- xgb.train(data = dtrain, watchlist = watch, nrounds = 50)
+redwineXGB <- xgb.train(data = dtrain, watchlist = list(test = dtest), nrounds = 10)
 ~~~
 {: .language-r}
 
 
 
 ~~~
-[1]	train-rmse:3.676364	test-rmse:3.676491 
-[2]	train-rmse:2.617381	test-rmse:2.620643 
-[3]	train-rmse:1.884501	test-rmse:1.904736 
-[4]	train-rmse:1.380320	test-rmse:1.414777 
-[5]	train-rmse:1.040359	test-rmse:1.110905 
-[6]	train-rmse:0.812738	test-rmse:0.913236 
-[7]	train-rmse:0.661508	test-rmse:0.793578 
-[8]	train-rmse:0.563880	test-rmse:0.729415 
-[9]	train-rmse:0.499910	test-rmse:0.686777 
-[10]	train-rmse:0.455213	test-rmse:0.665393 
-[11]	train-rmse:0.427036	test-rmse:0.650133 
-[12]	train-rmse:0.399291	test-rmse:0.642655 
-[13]	train-rmse:0.388654	test-rmse:0.640231 
-[14]	train-rmse:0.368818	test-rmse:0.634134 
-[15]	train-rmse:0.361202	test-rmse:0.637910 
-[16]	train-rmse:0.347489	test-rmse:0.636140 
-[17]	train-rmse:0.333721	test-rmse:0.640103 
-[18]	train-rmse:0.327205	test-rmse:0.640305 
-[19]	train-rmse:0.322311	test-rmse:0.640570 
-[20]	train-rmse:0.311274	test-rmse:0.637183 
-[21]	train-rmse:0.306126	test-rmse:0.639540 
-[22]	train-rmse:0.304587	test-rmse:0.641046 
-[23]	train-rmse:0.302227	test-rmse:0.642247 
-[24]	train-rmse:0.291819	test-rmse:0.642033 
-[25]	train-rmse:0.283164	test-rmse:0.643694 
-[26]	train-rmse:0.274758	test-rmse:0.644476 
-[27]	train-rmse:0.263478	test-rmse:0.644651 
-[28]	train-rmse:0.261211	test-rmse:0.645701 
-[29]	train-rmse:0.252939	test-rmse:0.645628 
-[30]	train-rmse:0.242802	test-rmse:0.645754 
-[31]	train-rmse:0.235155	test-rmse:0.645139 
-[32]	train-rmse:0.223787	test-rmse:0.647024 
-[33]	train-rmse:0.215584	test-rmse:0.646311 
-[34]	train-rmse:0.210648	test-rmse:0.645720 
-[35]	train-rmse:0.207097	test-rmse:0.646027 
-[36]	train-rmse:0.205686	test-rmse:0.646187 
-[37]	train-rmse:0.203362	test-rmse:0.647617 
-[38]	train-rmse:0.195475	test-rmse:0.648483 
-[39]	train-rmse:0.192458	test-rmse:0.649351 
-[40]	train-rmse:0.188874	test-rmse:0.648917 
-[41]	train-rmse:0.183996	test-rmse:0.647272 
-[42]	train-rmse:0.178708	test-rmse:0.648906 
-[43]	train-rmse:0.170608	test-rmse:0.650643 
-[44]	train-rmse:0.165917	test-rmse:0.649631 
-[45]	train-rmse:0.158432	test-rmse:0.648941 
-[46]	train-rmse:0.152803	test-rmse:0.648363 
-[47]	train-rmse:0.149589	test-rmse:0.648510 
-[48]	train-rmse:0.147823	test-rmse:0.648336 
-[49]	train-rmse:0.147145	test-rmse:0.648266 
-[50]	train-rmse:0.141775	test-rmse:0.648939 
+[1]	test-rmse:3.676491 
+[2]	test-rmse:2.620643 
+[3]	test-rmse:1.904736 
+[4]	test-rmse:1.414777 
+[5]	test-rmse:1.110905 
+[6]	test-rmse:0.913236 
+[7]	test-rmse:0.793578 
+[8]	test-rmse:0.729415 
+[9]	test-rmse:0.686777 
+[10]	test-rmse:0.665393 
+~~~
+{: .output}
+
+The training history is saved as a data frame in the variable `gbm$evaluation_log`, so we can plot how the RMSE changes during the training process.
+
+
+~~~
+redwineXGB$evaluation_log %>%
+  ggplot(aes(x = iter, y = test_rmse)) +
+  geom_line()
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-05-unnamed-chunk-9-1.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" width="612" style="display: block; margin: auto;" />
+
+
+> ## Challenge: How many boosting iterations?
+>
+> Experiment with different values of `nrounds` in the above call to `xgb.train`.
+> Does the accuracy of the model improve with more iterations? Is there a point 
+> after which the model ceases to improve?
+>
+> > ## Solution
+> > 
+> > The accuracy of the model doesn't appear to improve after iteration 14.
+> >
+> > 
+> > ~~~
+> > redwineXGB <- xgb.train(data = dtrain, 
+> >                         watchlist = list(test = dtest), 
+> >                         nrounds = 20)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> > [1]	test-rmse:3.676491 
+> > [2]	test-rmse:2.620643 
+> > [3]	test-rmse:1.904736 
+> > [4]	test-rmse:1.414777 
+> > [5]	test-rmse:1.110905 
+> > [6]	test-rmse:0.913236 
+> > [7]	test-rmse:0.793578 
+> > [8]	test-rmse:0.729415 
+> > [9]	test-rmse:0.686777 
+> > [10]	test-rmse:0.665393 
+> > [11]	test-rmse:0.650133 
+> > [12]	test-rmse:0.642655 
+> > [13]	test-rmse:0.640231 
+> > [14]	test-rmse:0.634134 
+> > [15]	test-rmse:0.637910 
+> > [16]	test-rmse:0.636140 
+> > [17]	test-rmse:0.640103 
+> > [18]	test-rmse:0.640305 
+> > [19]	test-rmse:0.640570 
+> > [20]	test-rmse:0.637183 
+> > ~~~
+> > {: .output}
+> > 
+> > 
+> > 
+> > ~~~
+> > redwineXGB$evaluation_log %>%
+> >   ggplot(aes(x = iter, y = test_rmse)) +
+> >   geom_line() 
+> > ~~~
+> > {: .language-r}
+> > 
+> > <img src="../fig/rmd-05-unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" width="612" style="display: block; margin: auto;" />
+> > 
+> {: .solution}
+{: .challenge}
+
+## Learning Rate
+
+Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a parameter that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum answer.
+
+In XGBoost, the parameter that controls the learning rate is called `eta`. It's default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
+
+The following code will set `eta` to its default value. We include a value for `early_stopping_rounds`, which will halt the training after a specified number of iterations pass without improvement. When using `early_stopping_rounds`, `nrounds` can be set to a very large number. To avoid printing too many lines of output, we also set a value for `print_every_n`.
+
+
+~~~
+redwineXGB <- xgb.train(data = dtrain, 
+                        params = list(eta = 0.3),
+                        watchlist = list(test = dtest), 
+                        nrounds = 1000,
+                        early_stopping_rounds = 10,
+                        print_every_n = 5)
+~~~
+{: .language-r}
+
+
+
+~~~
+[1]	test-rmse:3.676491 
+Will train until test_rmse hasn't improved in 10 rounds.
+
+[6]	test-rmse:0.913236 
+[11]	test-rmse:0.650133 
+[16]	test-rmse:0.636140 
+[21]	test-rmse:0.639540 
+Stopping. Best iteration:
+[14]	test-rmse:0.634134
+~~~
+{: .output}
+
+The 14th iteration had the smallest RMSE, as we found in the previous challenge.
+
+> ## Challenge: Experiment with the learning rate.
+>
+> Experiment with different values of `eta` in the above call to `xgb.train`.
+> Notice how smaller values of eta require more iterations. Can you find a 
+> value of `eta` that results in a lower testing set RMSE than the default?
+>
+> > ## Solution
+> > 
+> > A learning rate around 0.1 reduces the RMSE somewhat.
+> >
+> > 
+> > ~~~
+> > redwineXGB <- xgb.train(data = dtrain, 
+> >                         params = list(eta = 0.1),
+> >                         watchlist = list(test = dtest), 
+> >                         nrounds = 1000,
+> >                         early_stopping_rounds = 10,
+> >                         print_every_n = 15)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> > [1]	test-rmse:4.689982 
+> > Will train until test_rmse hasn't improved in 10 rounds.
+> > 
+> > [16]	test-rmse:1.164598 
+> > [31]	test-rmse:0.655252 
+> > [46]	test-rmse:0.618707 
+> > [61]	test-rmse:0.617009 
+> > [76]	test-rmse:0.612820 
+> > Stopping. Best iteration:
+> > [75]	test-rmse:0.612406
+> > ~~~
+> > {: .output}
+> > 
+> {: .solution}
+{: .challenge}
+
+## Variable Importance
+
+As with random forests, you can view the predictive importance of each explanatory variable.
+
+
+~~~
+xgb.importance(model = redwineXGB)
+~~~
+{: .language-r}
+
+
+
+~~~
+                 Feature       Gain      Cover  Frequency
+ 1:              alcohol 0.33236129 0.11264259 0.07936508
+ 2:     volatile.acidity 0.12367170 0.09820458 0.11922399
+ 3:            sulphates 0.10975935 0.10726694 0.08218695
+ 4: total.sulfur.dioxide 0.07500529 0.13655797 0.09276896
+ 5:              density 0.05960668 0.09451465 0.08500882
+ 6:            chlorides 0.05883225 0.10318293 0.09805996
+ 7:       residual.sugar 0.05499778 0.09106117 0.08818342
+ 8:        fixed.acidity 0.05087633 0.07920964 0.14250441
+ 9:                   pH 0.04772447 0.06078573 0.06807760
+10:          citric.acid 0.04532904 0.07698668 0.07830688
+11:  free.sulfur.dioxide 0.04183582 0.03958713 0.06631393
+~~~
+{: .output}
+
+The rows are sorted by `Gain`, which measures the accuracy improvement contributed by a feature based on all the splits it determines. Note that the sum of all the gains is 1.
+
+## Training Accuracy vs. Testing Accuracy
+
+Like many machine learning algorithms, gradient boosting operates by minimizing the error on the training set. However, we evaluate its accuracy by computing the error on the testing set. These two errors are usually different, and it is not uncommon to have much lower training RMSE than testing RMSE. 
+
+To see both training and testing errors, we can add a `train` item to the `watchlist`.
+
+
+~~~
+redwineXGB <- xgb.train(data = dtrain, 
+                        params = list(eta = 0.1),
+                        watchlist = list(train = dtrain, test = dtest), 
+                        nrounds = 1000,
+                        early_stopping_rounds = 10,
+                        print_every_n = 15)
+~~~
+{: .language-r}
+
+
+
+~~~
+[1]	train-rmse:4.690114	test-rmse:4.689982 
+Multiple eval metrics are present. Will use test_rmse for early stopping.
+Will train until test_rmse hasn't improved in 10 rounds.
+
+[16]	train-rmse:1.109302	test-rmse:1.164598 
+[31]	train-rmse:0.467275	test-rmse:0.655252 
+[46]	train-rmse:0.369513	test-rmse:0.618707 
+[61]	train-rmse:0.328256	test-rmse:0.617009 
+[76]	train-rmse:0.290210	test-rmse:0.612820 
+Stopping. Best iteration:
+[75]	train-rmse:0.291627	test-rmse:0.612406
 ~~~
 {: .output}
 
 
-~~~
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-~~~
-{: .language-r}
-
-<img src="../fig/rmd-05-unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" width="612" style="display: block; margin: auto;" />
-
-
-## Overfitting
-
-The RMSE on the training set is much smaller than the RMSE on the test set, so our model is *overfitting*. 
-
 
 ~~~
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 140,
-               max_depth = 3,
-               eta = 0.03,
-               )
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-~~~
-{: .language-r}
-
-<img src="../fig/rmd-05-unnamed-chunk-11-1.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" width="612" style="display: block; margin: auto;" />
-
-~~~
-tail(gbm$evaluation_log)
+xgb.importance(model = redwineXGB)
 ~~~
 {: .language-r}
 
 
 
 ~~~
-   iter train_rmse test_rmse
-1:  135   0.552674  0.650107
-2:  136   0.552007  0.649781
-3:  137   0.551449  0.649636
-4:  138   0.550516  0.649335
-5:  139   0.549945  0.649244
-6:  140   0.549213  0.649080
+                 Feature       Gain      Cover  Frequency
+ 1:              alcohol 0.33236129 0.11264259 0.07936508
+ 2:     volatile.acidity 0.12367170 0.09820458 0.11922399
+ 3:            sulphates 0.10975935 0.10726694 0.08218695
+ 4: total.sulfur.dioxide 0.07500529 0.13655797 0.09276896
+ 5:              density 0.05960668 0.09451465 0.08500882
+ 6:            chlorides 0.05883225 0.10318293 0.09805996
+ 7:       residual.sugar 0.05499778 0.09106117 0.08818342
+ 8:        fixed.acidity 0.05087633 0.07920964 0.14250441
+ 9:                   pH 0.04772447 0.06078573 0.06807760
+10:          citric.acid 0.04532904 0.07698668 0.07830688
+11:  free.sulfur.dioxide 0.04183582 0.03958713 0.06631393
 ~~~
 {: .output}
 
-TODO: Challenge: Tune some parameters and try to get a model with less overfitting. Start with max_depth = 6 and eta = 0.3 (default) and tweak max_depth, eta, and nrounds. Possible solution above.
 
 
 ~~~
-pQuality <- predict(gbm, as.matrix(select(testDF, -quality)))
-gbErrors <- pQuality - testDF$quality
-tibble(`Predicted Quality` = pQuality, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-~~~
-{: .language-r}
-
-<img src="../fig/rmd-05-unnamed-chunk-12-1.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" width="612" style="display: block; margin: auto;" />
-
-
-TODO: Challenge: Try with white wine data.
-
-
-~~~
-whitewine <- wine %>% dplyr::slice(1600:6497) 
-trainSize <- round(0.80 * nrow(whitewine))
-set.seed(1234) 
-trainIndex <- sample(nrow(whitewine), trainSize)
-trainDF <- whitewine %>% dplyr::slice(trainIndex)
-testDF <- whitewine %>% dplyr::slice(-trainIndex)
-dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
-dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
-watch <- list(train = dtrain, test = dtest)
-~~~
-{: .language-r}
-
-
-~~~
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 150,
-               max_depth = 3,
-               eta = 0.03,
-               )
-gbm$evaluation_log %>% 
+redwineXGB$evaluation_log %>% 
   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbm$evaluation_log)
 ~~~
 {: .language-r}
 
-Note: Using linear boosting doesn't improve things.
+<img src="../fig/rmd-05-unnamed-chunk-14-1.png" title="plot of chunk unnamed-chunk-14" alt="plot of chunk unnamed-chunk-14" width="612" style="display: block; margin: auto;" />
+
+Notice that beyond iteration 40 or so, the training RMSE continues to decrease while the testing RMSE has basically stabilized. This divergence indicates that the later training iterations are improving the model based on the particularities of the training set, but in a way that does not generalize to the testing set.
 
 
-~~~
-gbm <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-                 booster = "gblinear", eta = 0.02,
-               nrounds = 150
-               )
-gbm$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbm$evaluation_log)
-~~~
-{: .language-r}
+> ## Challenge: White Wine
+>
+> Build an XGBoost model for the white wine data (rows 600-6497) of the
+> `wine` data frame. Compare the accuracy and variable importance with 
+> the random forest white wine model from the previous episode.
+>
+> > ## Solution
+> >
+> > 
+> > ~~~
+> > whitewine <- wine %>% dplyr::slice(1600:6497) 
+> > trainSize <- round(0.80 * nrow(whitewine))
+> > set.seed(1234) 
+> > trainIndex <- sample(nrow(whitewine), trainSize)
+> > trainDF <- whitewine %>% dplyr::slice(trainIndex)
+> > testDF <- whitewine %>% dplyr::slice(-trainIndex)
+> > dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
+> > dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+> > whitewineXGB <- xgb.train(data = dtrain, 
+> >                           params = list(eta = 0.1),
+> >                           watchlist = list(train = dtrain, test = dtest), 
+> >                           nrounds = 1000,
+> >                           early_stopping_rounds = 10,
+> >                           print_every_n = 20)
+> > xgb.importance(model = whitewineXGB)
+> > whitewineXGB$evaluation_log %>% 
+> >   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
+> >   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+> > ~~~
+> > {: .language-r}
+> > 
+> > The testing set accuracy is slightly worse than what we obtained in the 
+> > random forest model. The important explanatory variables are similar.
+> > 
+> {: .solution}
+{: .challenge}
+
+So far, our XGBoost models have performed slightly worse than the equivalent random forest models. In the next episode we will explore ways to improve these results.
