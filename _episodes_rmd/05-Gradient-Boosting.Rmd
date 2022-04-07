@@ -215,8 +215,8 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 > >   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
 > > ```
 > > 
-> > The testing set accuracy is slightly worse than what we obtained in the 
-> > random forest model. The important explanatory variables are similar.
+> > The testing set RMSE (0.664) is worse than what we obtained in the 
+> > random forest model (0.63). The important explanatory variables are similar.
 > > 
 > {: .solution}
 {: .challenge}
