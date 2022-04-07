@@ -15,7 +15,7 @@ objectives:
 - "Introduce the problem of overfitting."
 keypoints:
 - "Training data can give us a decision tree model."
-- "Decision trees are susceptible to overfitting."
+- "Decision trees are sensitive to changes in the training set."
 ---
 
 
@@ -229,7 +229,7 @@ testPredictions <- testDF %>%
 > > ~~~
 > > {: .output}
 > > 
-> > Since the value of `Start` is less than 13, ve follow the "no" branch. Then since
+> > Since the value of `Start` is less than 13, we follow the "no" branch. Then since
 > > the value of `Number` is greater than 6, we follow the right branch to land on the 
 > > leaf labeled "present", with a probability of 6/7, which is 0.8571.
 > > 

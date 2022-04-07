@@ -114,7 +114,7 @@ In the jargon of machine learning, a model that predicts a categorical output va
 This lesson will focus on three machine learning methods that apply to both classification and regression problems. 
 
 - Decision Trees
-- Decision Forests
+- Random Forests
 - Gradient Boosted Trees
 
 We will also briefly explore classical linear and logistic regression, which we can view as simple examples of supervised learning. 

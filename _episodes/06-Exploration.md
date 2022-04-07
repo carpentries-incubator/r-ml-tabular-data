@@ -3,33 +3,39 @@
 # Instead, please edit 06-Exploration.md in _episodes_rmd/
 source: Rmd
 title: "Cross Validation and Tuning"
-teaching: 15 
-exercises: 50
+teaching: 45 
+exercises: 30
 questions:
-- "TODO"
+- "How can the fit of an XGBoost model be improved?"
+- "What is cross validation?"
+- "What are some guidelines for tuning parameters in a machine learning algorithm?"
 objectives:
-- "TODO"
+- "Explore the effects of adjusting the XGBoost parameters."
+- "Practice some coding techniques to tune parameters using grid searching and cross validation."
 keypoints:
-- "TODO"
+- "Parameter tuning can improve the fit of an XGBoost model."
+- "Cross validation allows us to tune parameters using the training set only, saving the testing set for final model evaluation."
 ---
 
 
 
-## Summary
+## Parameter Tuning
 
-TODO: 
+Like many other machine learning algorithms, XGBoost has an assortment of *parameters* that control the behavior of the training process. To improve the fit of the model, we can adjust, or *tune*, these parameters. According to the [notes on parameter tuning](https://xgboost.readthedocs.io/en/stable/tutorials/param_tuning.html) in the XGBoost documentation, "[p]arameter tuning is a dark art in machine learning," so it is difficult to prescribe an automated process for doing so. In this episode we will develop some coding practices for tuning an XGBoost model, but be advised that the optimal way to tune a model will depend heavily on the given data set.
 
+You can find a complete list of XGBoost parameters in [the documentation](https://xgboost.readthedocs.io/en/stable/parameter.html). Generally speaking, each parameter controls the complexity of the model in some way. More complex models tend to fit the training data more closely, but such models can be very sensitive to small changes in the training set. On the other hand, while less complex models can be more conservative in this respect, they have a harder time modeling intricate relationships. The "art" of parameter tuning lies in finding an appropriately complex model for the problem at hand.
 
+A complete discussion of the issues involved are beyond the scope of this lesson. An excellent resource on the topic is [An Introduction to Statistical Learning](https://hastie.su.domains/ISLR2/ISLRv2_website.pdf), by James, Witten, Hastie, and Tibshirani. In particular, Section 2.2.2 discusses the *Bias-Variance Trade-Off* inherent in statistical learning methods.
 
-# Hyperparameters
+## Cross Validation
 
+How will we be able to tell if an adjustment to a parameter has improved the model? One possible approach would be to test the model before and after the adjustment on the testing set. However, the problem with this method is that it runs the risk of tuning the model to the particular properties of the testing set, rather than to general future cases that we might encounter. It is better practice to save our testing set until the very end of the process, and then use it to test the accuracy of our model. Training set accuracy, as we have seen, tends to underestimate the accuracy of a machine learning model, so tuning to the training set may also fail to make improvements that generalize. 
 
-# Cross Validation
+An alternative testing procedure is to use *cross validation* on the training set to judge the effect of tuning adjustments.  In *k*-fold cross validation, the training set is partitioned randomly into *k* subsets. Each of these subsets takes a turn as a testing set, while the model is trained on the remaining data. The accuracy of the model is then measured *k* times, and the results are averaged to obtain an estimate of the overall model accuracy. In this way we can be more certain that repeated adjustments will be tested in ways that generalize to future observations. It also allows us to save the original testing set for a final test of our tuned model.
 
+## Revisit the Red Wine Quality Model
 
-# Red Wine Data, revisited
-
-## Reload Red Wine Training/Test set
+Let's see if we can improve the previous episode's model for predicting red wine quality.
 
 
 ~~~
@@ -45,31 +51,168 @@ trainDF <- redwine %>% dplyr::slice(trainIndex)
 testDF <- redwine %>% dplyr::slice(-trainIndex)
 dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
 dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
-watch <- list(train = dtrain, test = dtest)
 ~~~
 {: .language-r}
 
+The `xgb.cv` command handles most of the details of the cross validation process. Since this is a random process, we will set a seed value for reproducibility. We will use 10 folds and the default value of 0.3 for `eta`.
+
 
 ~~~
-set.seed(8833)
+set.seed(524)
 rwCV <- xgb.cv(params = list(eta = 0.3),
                data = dtrain, 
                nfold = 10,
                nrounds = 500,
                early_stopping_rounds = 10,
-               verbose = FALSE)
+               print_every_n = 5)
 ~~~
 {: .language-r}
 
-Examine cv results.
+
+
+~~~
+[1]	train-rmse:3.676824+0.003733	test-rmse:3.682795+0.044551 
+Multiple eval metrics are present. Will use test_rmse for early stopping.
+Will train until test_rmse hasn't improved in 10 rounds.
+
+[6]	train-rmse:0.808822+0.003848	test-rmse:0.888110+0.043011 
+[11]	train-rmse:0.418891+0.013364	test-rmse:0.641062+0.037335 
+[16]	train-rmse:0.343756+0.012450	test-rmse:0.628046+0.033493 
+[21]	train-rmse:0.299929+0.010729	test-rmse:0.625757+0.033106 
+[26]	train-rmse:0.258271+0.013402	test-rmse:0.624861+0.036458 
+[31]	train-rmse:0.225188+0.013268	test-rmse:0.623947+0.042251 
+[36]	train-rmse:0.194026+0.011850	test-rmse:0.624094+0.042001 
+Stopping. Best iteration:
+[29]	train-rmse:0.236075+0.013368	test-rmse:0.622687+0.041345
+~~~
+{: .output}
+
+The output appears similar to the `xgb.train` command. Notice that each error estimate now includes a standard deviation, because these estimates are formed by averaging over all ten folds. The function returns a list,  which we have given the name `rwCV`. Its `names` hint at what each list item represents.
+
+
+~~~
+names(rwCV)
+~~~
+{: .language-r}
+
+
+
+~~~
+[1] "call"            "params"          "callbacks"       "evaluation_log" 
+[5] "niter"           "nfeatures"       "folds"           "best_iteration" 
+[9] "best_ntreelimit"
+~~~
+{: .output}
+
+> ## Challenge: Examine the cross validation results
+>
+> 1. Examine item `rwCV$folds`. What do suppose these numbers represent? 
+>    Are all the folds the same size? Can you explain why/why not?
+> 2. Display the evaluation log with rows sorted by `test_rmse_mean`.
+> 3. How could you display only the row containing the best iteration?
+>
+> > ## Solution
+> > 
+> > 1. The numbers are the indexes of the rows in each fold. The folds are not
+> >    all the same size, because no row can be used more than once, and there 
+> >    are 1279 rows total in the training set, so they don't divide evenly into
+> >    10 partitions.
+> > 2. 
+> > 
+> > ~~~
+> > rwCV$evaluation_log %>% arrange(test_rmse_mean)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> >     iter train_rmse_mean train_rmse_std test_rmse_mean test_rmse_std
+> >  1:   29       0.2360750    0.013368258      0.6226873    0.04134496
+> >  2:   35       0.2007999    0.011608421      0.6229431    0.04233828
+> >  3:   33       0.2134822    0.012373727      0.6229543    0.04233918
+> >  4:   32       0.2192703    0.013307150      0.6229588    0.04129833
+> >  5:   34       0.2076732    0.012222206      0.6233338    0.04166862
+> >  6:   28       0.2426037    0.013287397      0.6233427    0.03899297
+> >  7:   31       0.2251877    0.013267913      0.6239474    0.04225126
+> >  8:   36       0.1940258    0.011849586      0.6240941    0.04200146
+> >  9:   30       0.2310984    0.012282083      0.6241792    0.04091903
+> > 10:   27       0.2507865    0.013086612      0.6241845    0.03830987
+> > 11:   37       0.1893308    0.011078990      0.6243739    0.04193393
+> > 12:   25       0.2659939    0.012269921      0.6245431    0.03553348
+> > 13:   39       0.1790855    0.011284969      0.6245503    0.04176555
+> > 14:   38       0.1846428    0.010905497      0.6247798    0.04141676
+> > 15:   26       0.2582706    0.013402014      0.6248607    0.03645823
+> > 16:   23       0.2835744    0.010293012      0.6256707    0.03261511
+> > 17:   21       0.2999289    0.010728641      0.6257570    0.03310636
+> > 18:   18       0.3203637    0.010830182      0.6257911    0.03230534
+> > 19:   22       0.2910246    0.011284064      0.6259864    0.03283503
+> > 20:   24       0.2760179    0.012458671      0.6260505    0.03340590
+> > 21:   20       0.3067599    0.010738344      0.6262777    0.03185295
+> > 22:   17       0.3320215    0.011822778      0.6271511    0.03445182
+> > 23:   19       0.3119271    0.010392825      0.6272787    0.03191299
+> > 24:   15       0.3564080    0.012468510      0.6273193    0.03434994
+> > 25:   16       0.3437563    0.012450071      0.6280460    0.03349314
+> > 26:   14       0.3679578    0.011806770      0.6285073    0.03311775
+> > 27:   13       0.3802031    0.011004740      0.6307059    0.03545815
+> > 28:   12       0.3983363    0.010466892      0.6353595    0.03506214
+> > 29:   11       0.4188906    0.013364245      0.6410624    0.03733490
+> > 30:   10       0.4497433    0.011539998      0.6501030    0.04014733
+> > 31:    9       0.4915644    0.010805123      0.6679336    0.03942578
+> > 32:    8       0.5556933    0.007217616      0.7061342    0.03954671
+> > 33:    7       0.6565486    0.004032688      0.7713877    0.04152210
+> > 34:    6       0.8088225    0.003847733      0.8881102    0.04301115
+> > 35:    5       1.0398670    0.003228511      1.0914671    0.04090898
+> > 36:    4       1.3825695    0.002820774      1.4113088    0.03738245
+> > 37:    3       1.8857284    0.002530642      1.9004059    0.04118862
+> > 38:    2       2.6184090    0.002917275      2.6270223    0.04337352
+> > 39:    1       3.6768239    0.003733300      3.6827954    0.04455073
+> >     iter train_rmse_mean train_rmse_std test_rmse_mean test_rmse_std
+> > ~~~
+> > {: .output}
+> > 3. 
+> > 
+> > ~~~
+> > rwCV$evaluation_log[rwCV$best_iteration]
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> >    iter train_rmse_mean train_rmse_std test_rmse_mean test_rmse_std
+> > 1:   29        0.236075     0.01336826      0.6226873    0.04134496
+> > ~~~
+> > {: .output}
+> > 
+> {: .solution}
+{: .challenge}
+
+## Repeat Cross Validation in a Loop
+
+To expedite the tuning process, it helps to design a loop to run repeated cross validations on different parameter values. We can start by choosing a value of `eta` from a list of candidate values.
 
 
 ~~~
 paramDF <- tibble(eta = c(0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4))
+~~~
+{: .language-r}
+
+The following command converts a data frame to a list of lists. Each item in this list will be a different valid parameter setting that we can use in the `xgb.cv` function.
+
+
+~~~
 paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
+~~~
+{: .language-r}
+
+Now we will write a loop that will perform a different cross validation for each parameter setting in the `paramList` list. We'll keep track of the best iterations in the `bestResults` tibble. To avoid too much printing, we set `verbose = FALSE` and use a `txtProgressBar` to keep track of our progress. On some systems, it may be necessary to use `gc()` to prevent running out of memory.
+
+
+~~~
 bestResults <- tibble()
-set.seed(8833)
-pb <- txtProgressBar(style = 3)
+set.seed(708)
+pb <- txtProgressBar(style = 3) 
 for(i in seq(length(paramList))) {
   rwCV <- xgb.cv(params = paramList[[i]], 
                  data = dtrain, 
@@ -82,89 +225,44 @@ for(i in seq(length(paramList))) {
   gc() # Free unused memory after each loop iteration
   setTxtProgressBar(pb, i/length(paramList))
 }
-close(pb)
+close(pb) # done with the progress bar
+~~~
+{: .language-r}
+
+We now have all of the best iterations in the `bestResults` data frame, which we now combine with the data frame of parameter values.
+
+
+~~~
 etasearch <- bind_cols(paramDF, bestResults)
 ~~~
 {: .language-r}
 
-Use eta = 0.1 for parameter tuning. 
+In RStudio, it is convenient to use `View(etasearch)` to view the results in a separate tab. We can use the RStudio interface to sort by `mean_test_rmse`.
 
-## Grid search
+Note that there is not much difference in `mean_test_rmse` among the best three choices. As we have seen in the previous episode, the choice of `eta` typically involves a trade-off between speed and accuracy. A common approach is to pick a reasonable value of `eta` and then stick with it for the rest of the tuning process. Let's use `eta` = 0.1, because it uses about half as many steps as `eta` = 0.05, and the accuracy is comparable.
+
+## Grid Search
+
+Sometimes it helps to tune a pair of related parameters together. A *grid search* runs through all possible combinations of candidate values for a selection of parameters. 
+
+We will tune the parameters `max_depth` and `max_leaves` together. These both affect the size the trees that the algorithm grows. Deeper trees with more leaves make the model more complex. We use the `expand.grid` function to store some reasonable candidate values in `paramDF`. 
 
 
 ~~~
 paramDF <- expand.grid(
-  max_depth = 5:13,
-  min_child_weight = seq(0, 20, by = 2),
-  eta = 0.1
-)
-paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
-bestResults <- tibble()
-set.seed(8833)
-pb <- txtProgressBar(style = 3)
-for(i in seq(length(paramList))) {
-  rwCV <- xgb.cv(params = paramList[[i]],
-                 data = dtrain, 
-                 nrounds = 500, 
-                 nfold = 10,
-                 early_stopping_rounds = 10,
-                 verbose = FALSE)
-  bestResults <- bestResults %>% 
-    bind_rows(rwCV$evaluation_log[rwCV$best_iteration])
-  gc() # Free unused memory after each loop iteration
-  setTxtProgressBar(pb, i/length(paramList))
-}
-close(pb)
-depth_childweight <- bind_cols(paramDF, bestResults)
+  max_depth = seq(15, 30, by = 2),
+  max_leaves = c(63, 127, 255, 511, 1023, 2047, 4095),
+  eta = 0.1)
 ~~~
 {: .language-r}
 
-Looks like deep trees do better. 
+If you `View(paramDF)` you can see that we have 56 different parameter choices to run through. The rest of the code is the same as before, but this loop might take a while to execute.
 
 
 ~~~
-paramDF <- expand.grid(
-  max_depth = seq(10, 30, by = 2),
-  max_leaves = c(15, 31, 63, 127, 255, 511, 1023, 2047, 4095),
-  eta = 0.1
-)
 paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
 bestResults <- tibble()
-set.seed(8833)
-pb <- txtProgressBar(style = 3)
-for(i in seq(length(paramList))) {
-  rwCV <- xgb.cv(params = paramList[[i]],
-                 data = dtrain, 
-                 nrounds = 500, 
-                 nfold = 10,
-                 early_stopping_rounds = 10,
-                 verbose = FALSE)
-  bestResults <- bestResults %>% 
-    bind_rows(rwCV$evaluation_log[rwCV$best_iteration])
-  gc() # Free unused memory after each loop iteration
-  setTxtProgressBar(pb, i/length(paramList))
-}
-close(pb)
-depth_leaves <- bind_cols(paramDF, bestResults)
-~~~
-{: .language-r}
-
-## Challenge: Do a grid search for subsample and colsample_bytree
-
-Solution:
-
-
-~~~
-paramDF <- expand.grid(
-  subsample = seq(0.5, 1, by = 0.1),
-  colsample_bytree = seq(0.5, 1, by = 0.1),
-  max_depth = 24,
-  max_leaves = 2047,
-  eta = 0.1
-)
-paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
-bestResults <- tibble()
-set.seed(8833)
+set.seed(312)
 pb <- txtProgressBar(style = 3)
 for(i in seq(length(paramList))) {
   rwCV <- xgb.cv(params = paramList[[i]],
@@ -179,405 +277,269 @@ for(i in seq(length(paramList))) {
   setTxtProgressBar(pb, i/length(paramList))
 }
 close(pb)
-randsubsets <- bind_cols(paramDF, bestResults)
+depth_leaves <- bind_cols(paramDF, bestResults)
 ~~~
 {: .language-r}
 
-## Final check against test set
+When we `View(depth_leaves)` we see that a choice of `max_depth` = 21 and `max_leaves` = 4095 results in the best `test_rmse_mean`. One caveat is that cross validation is a random process, so running this code with a different random seed may very well produce a different result. However, there are several results with `max_depth` in the 20s and `max_leaves` in the 1000s, so we can be pretty sure that our choice these parameter values is sound.
+
+> ## Challenge: Write a Grid Search Function
+>
+> Instead of repeatedly using the above code block, let's package it into 
+> an [R function](https://swcarpentry.github.io/r-novice-inflammation/02-func-R/).
+> Define a function called `GridSearch` that consumes a data frame `paramDF`
+> of candidate parameter values 
+> and an `xgb.DMatrix` `dtrain` of training data. The function should
+> return a data frame combining the columns of `paramDF` with the 
+> corresponding results of the best cross validation iteration. The returned
+> data frame should be sorted in ascending order of `test_rmse_mean`.
+>
+> > ## Solution
+> > 
+> > 
+> > ~~~
+> > GridSearch <- function(paramDF, dtrain) {
+> >   paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
+> >   bestResults <- tibble()
+> >   pb <- txtProgressBar(style = 3)
+> >   for(i in seq(length(paramList))) {
+> >     rwCV <- xgb.cv(params = paramList[[i]],
+> >                    data = dtrain, 
+> >                    nrounds = 500, 
+> >                    nfold = 10,
+> >                    early_stopping_rounds = 10,
+> >                    verbose = FALSE)
+> >     bestResults <- bestResults %>% 
+> >       bind_rows(rwCV$evaluation_log[rwCV$best_iteration])
+> >     gc() 
+> >     setTxtProgressBar(pb, i/length(paramList))
+> >   }
+> >   close(pb)
+> >   return(bind_cols(paramDF, bestResults) %>% arrange(test_rmse_mean))
+> > }
+> > ~~~
+> > {: .language-r}
+> > 
+> > Check the function on a small example.
+> >
+> > 
+> > ~~~
+> > set.seed(630)
+> > GridSearch(tibble(eta = c(0.3, 0.2, 0.1)), dtrain)
+> > ~~~
+> > {: .language-r}
+> > 
+> > 
+> > 
+> > ~~~
+> > 
+  |                                                                            
+  |                                                                      |   0%
+  |                                                                            
+  |=======================                                               |  33%
+  |                                                                            
+  |===============================================                       |  67%
+  |                                                                            
+  |======================================================================| 100%
+> > ~~~
+> > {: .output}
+> > 
+> > 
+> > 
+> > ~~~
+> > # A tibble: 3 × 6
+> >     eta  iter train_rmse_mean train_rmse_std test_rmse_mean test_rmse_std
+> >   <dbl> <dbl>           <dbl>          <dbl>          <dbl>         <dbl>
+> > 1   0.1   100           0.220        0.00805          0.589        0.0543
+> > 2   0.2    40           0.256        0.0123           0.598        0.0426
+> > 3   0.3    41           0.170        0.00669          0.610        0.0468
+> > ~~~
+> > {: .output}
+> > 
+> {: .solution}
+{: .challenge}
+
+## Adding Random Sampling
+
+Adding random sampling to the training process can help make the model less dependent on the training set, and hopefully more accurate when generalizing to future cases. In XGBoost, the two parameters `subsample` and `colsample_bytree` will grow trees based on a random sample of a specified percentage of rows and columns, respectively. Typical values for these parameters are between 0.5 and 1.0 (where 1.0 implies that no random sampling will be done).
+
+> ## Challenge: Tune Row and Column Sampling
+>
+> Use a grid search to tune the parameters `subsample` and `colsample_bytree`. 
+> Choose candidate values between 0.5 and 1.0. Use our previously chosen values
+> of `eta`, `max_depth`, and `max_leaves`.
+>
+> > ## Solution
+> > 
+> > 
+> > ~~~
+> > paramDF <- expand.grid(
+> >   subsample = seq(0.5, 1, by = 0.1),
+> >   colsample_bytree = seq(0.5, 1, by = 0.1),
+> >   max_depth = 21,
+> >   max_leaves = 4095,
+> >   eta = 0.1)
+> > set.seed(848)
+> > randsubsets <- GridSearch(paramDF, dtrain)
+> > ~~~
+> > {: .language-r}
+> > 
+> > It appears that some amount of randomization helps, but there are many 
+> > choices for `subsample` and `colsample_bytree` that seem equivalent.
+> >
+> {: .solution}
+{: .challenge}
+
+## Final Check using the Testing Set
+
+Once a model has been tuned using the training set and cross validation, it can  be tested using the testing set. Note that we have not used the testing set in any of our tuning experiments, so the testing set accuracy should give a fair assessment of the accuracy of our tuned model relative to the other models we have explored. 
+
+We give parameters `max_depth`, `max_leaves`, `subsample`, and `colsample_bytree` the values that we chose during the tuning process. Since we only have to do one training run, a smaller learning rate won't incur much of a time penalty, so we set `eta` = 0.05. 
 
 
 ~~~
-rwMod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 10000,
-               early_stopping_rounds = 50,
-               max_depth = 24,
-               max_leaves = 2047,
-               subsample = 0.7,
-               colsample_bytree = 0.5,
-               eta = 0.01
-               )
+set.seed(805)
+rwMod <- xgb.train(data = dtrain, verbose = 0,
+                   watchlist = list(train = dtrain, test = dtest), 
+                   nrounds = 10000,
+                   early_stopping_rounds = 50,
+                   max_depth = 21,
+                   max_leaves = 4095,
+                   subsample = 0.8,
+                   colsample_bytree = 0.7,
+                   eta = 0.05)
 rwMod$evaluation_log %>% 
   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
+~~~
+{: .language-r}
+
+<img src="../fig/rmd-06-unnamed-chunk-16-1.png" title="plot of chunk unnamed-chunk-16" alt="plot of chunk unnamed-chunk-16" width="612" style="display: block; margin: auto;" />
+
+~~~
 print(rwMod)
 ~~~
 {: .language-r}
 
 
-## CHALLENGE: Further tuning on white wine data
-
 
 ~~~
-source("loadwinedata.R")
-paramGrid <- tibble(eta = seq(0.001, 0.4, length.out = 50))
-paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  toxCV <- xgb.cv(params = c(paramList[[i]], 
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = TRUE,
-                  print_every_n = 10)
-  gc()
-  bestResults <- rbind(bestResults, toxCV$evaluation_log[toxCV$best_iteration])
-}
-etasearch <- bind_cols(paramGrid, bestResults)
+##### xgb.Booster
+raw: 9.6 Mb 
+call:
+  xgb.train(data = dtrain, nrounds = 10000, watchlist = list(train = dtrain, 
+    test = dtest), verbose = 0, early_stopping_rounds = 50, max_depth = 21, 
+    max_leaves = 4095, subsample = 0.8, colsample_bytree = 0.7, 
+    eta = 0.05)
+params (as set within xgb.train):
+  max_depth = "21", max_leaves = "4095", subsample = "0.8", colsample_bytree = "0.7", eta = "0.05", validate_parameters = "1"
+xgb.attributes:
+  best_iteration, best_msg, best_ntreelimit, best_score, niter
+callbacks:
+  cb.evaluation.log()
+  cb.early.stop(stopping_rounds = early_stopping_rounds, maximize = maximize, 
+    verbose = verbose)
+# of features: 11 
+niter: 257
+best_iteration : 207 
+best_ntreelimit : 207 
+best_score : 0.579419 
+best_msg : [207]	train-rmse:0.008751	test-rmse:0.579419 
+nfeatures : 11 
+evaluation_log:
+    iter train_rmse test_rmse
+       1   4.944345  4.944534
+       2   4.702813  4.702045
+---                          
+     256   0.003206  0.579576
+     257   0.003140  0.579578
 ~~~
-{: .language-r}
+{: .output}
 
-All values of eta are overfitting. Let's go with 0.09 for tuning experiments. See if we can beat a test RMSE of 0.6135.
+After some tuning, our testing set RMSE is down to 0.58, which is an improvement over the previous episode, and comparable to the RMSE we obtained using the random forest model.
 
+> ## Challenge: Improve the White Wine Model
+>
+> Improve your XGBoost model for the white wine data (rows 1600-6497) of the
+> `wine` data frame. Use grid searches to tune several parameters, using only
+> the training set during the tuning process. Can you improve the testing set
+> RMSE over the white wine challenges from the previous two episodes?
+>
+> > ## Solution
+> >
+> > Results may vary. The proposed solution below will take quite some time 
+> > to execute.
+> >
+> > 
+> > ~~~
+> > whitewine <- wine %>% dplyr::slice(1600:6497) 
+> > trainSize <- round(0.80 * nrow(whitewine))
+> > set.seed(1234) 
+> > trainIndex <- sample(nrow(whitewine), trainSize)
+> > trainDF <- whitewine %>% dplyr::slice(trainIndex)
+> > testDF <- whitewine %>% dplyr::slice(-trainIndex)
+> > dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), 
+> >                       label = trainDF$quality)
+> > dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), 
+> >                      label = testDF$quality)
+> > ~~~
+> > {: .language-r}
+> > 
+> > Start by tuning `max_depth` and `max_leaves` together.
+> > 
+> > 
+> > ~~~
+> > paramGrid <- expand.grid(
+> >   max_depth = seq(10, 40, by = 2),
+> >   max_leaves = c(15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191),
+> >   eta = 0.1
+> > )
+> > set.seed(1981)
+> > ww_depth_leaves <- GridSearch(paramGrid, dtrain)
+> > ~~~
+> > {: .language-r}
+> > 
+> > There are several options that perform similarly. Let's choose 
+> > `max_depth` = 12 along with `max_leaves` = 255. Now we tune the 
+> > two random sampling parameters together.
+> > 
+> > 
+> > ~~~
+> > paramGrid <- expand.grid(
+> >   subsample = seq(0.5, 1, by = 0.1),
+> >   colsample_bytree = seq(0.5, 1, by = 0.1),
+> >   max_depth = 12,
+> >   max_leaves = 255,
+> >   eta = 0.1
+> > )
+> > set.seed(867)
+> > ww_randsubsets <- GridSearch(paramGrid, dtrain)
+> > ~~~
+> > {: .language-r}
+> > 
+> > Again, some randomization seems to help, but there are several options. 
+> > We'll choose `subsample` = 0.9 and `colsample_bytree` = 0.6. 
+> > Finally, we train the model with the chosen parameters.
+> > 
+> > 
+> > ~~~
+> > set.seed(5309)
+> > ww_gbmod <- xgb.train(data = dtrain, verbose = 0,
+> >                    watchlist = list(train = dtrain, test = dtest), 
+> >                    nrounds = 10000,
+> >                    early_stopping_rounds = 50,
+> >                    max_depth = 12,
+> >                    max_leaves = 255,
+> >                    subsample = 0.9,
+> >                    colsample_bytree = 0.6,
+> >                    eta = 0.01)
+> > ~~~
+> > {: .language-r}
+> > 
+> > The tuned XGBoost model has a testing set RMSE of about 0.62, which is 
+> > better than the un-tuned model from the last episode (0.66), 
+> > and also better than the random forest model (0.63).
+> > 
+> {: .solution}
+{: .challenge}
 
-~~~
-source("loadwinedata.R")
-paramGrid <- expand.grid(
-  max_depth = 5:13,
-  min_child_weight = seq(0, 20, by = 2)
-)
-paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
-bestResults <- tibble()
-print(Sys.time())
-for(i in seq(length(paramList))) {
-  cat("   #", i, "of", length(paramList))
-  gbmod <- xgb.cv(params = c(paramList[[i]], 
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                           #  tree_method = "hist"), 
-                             tree_method = "exact"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = FALSE,
-                  print_every_n = 10)
-  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
-  gc() # Free unused memory after each loop iteration
-}
-cat("Finished.\n")
-print(Sys.time())
-depth_childweight <- bind_cols(paramGrid, bestResults)
-~~~
-{: .language-r}
-
-Looks like max_depth = 3 and min_child_weight = 50 doesn't overfit too bad. Try it:
-
-However max_depth = 12 and min_child_weight = 8 gives a test rmse of 0.6058.
-
-
-
-~~~
-gbmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 1000,
-               early_stopping_rounds = 25,
-               max_depth = 12,
-               min_child_weight = 8,
-               eta = 0.05
-               )
-gbmod$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbmod$evaluation_log)
-~~~
-{: .language-r}
-Best so far: test_rmse = 0.629. 
-
-
-
-~~~
-pww <- predict(gbmod, as.matrix(select(testDF, -quality)))
-gbErrors <- pww - testDF$quality
-tibble(`Predicted Quality` = pww, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-~~~
-{: .language-r}
-
-
-
-~~~
-xgb.importance(model = gbmod)
-~~~
-{: .language-r}
-
-## Tune using max_depth only?
-
-
-~~~
-source("loadwinedata.R")
-paramGrid <- expand.grid(
-  max_depth = 1:20
-)
-paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  cat("   #", i, "of", length(paramList))
-  gbmod <- xgb.cv(params = c(paramList[[i]], 
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = FALSE,
-                  print_every_n = 10)
-  gc()
-  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
-}
-cat("Finished.\n")
-depth_only <- bind_cols(paramGrid, bestResults)
-~~~
-{: .language-r}
-
-# Lauree++ recommended method
-
-https://sites.google.com/view/lauraepp/parameters
-
-## Tune using max_depth and max_leaves
-
-
-~~~
-source("loadwinedata.R")
-paramGrid <- expand.grid(
-  max_depth = seq(10, 30, by = 2),
-  max_leaves = c(15, 31, 63, 127, 255, 511, 1023, 2047, 4095)
-)
-paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
-bestResults <- tibble()
-for(i in seq(length(paramList))) {
-  cat("   #", i, "of", length(paramList))
-  gbmod <- xgb.cv(params = c(paramList[[i]], 
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = FALSE,
-                  print_every_n = 10)
-  gc()
-  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
-}
-cat("Finished.\n")
-depth_leaves <- bind_cols(paramGrid, bestResults)
-~~~
-{: .language-r}
-
-Best test-rmse is 12,63, followed by 26,255, 28,255.
-
-## Grid for random sampling.
-
-
-~~~
-source("loadwinedata.R")
-paramGrid <- expand.grid(
-  subsample = seq(0.5, 1, by = 0.1),
-  colsample_bytree = seq(0.5, 1, by = 0.1)
-)
-paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
-bestResults <- tibble()
-set.seed(2341)
-for(i in seq(length(paramList))) {
-  cat("   #", i, "of", length(paramList))
-  gbmod <- xgb.cv(params = c(paramList[[i]], 
-                             max_depth = 28, 
-                             max_leaves = 255,
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = FALSE,
-                  print_every_n = 10)
-  gc()
-  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
-}
-cat("Finished.\n")
-randrowcol <- bind_cols(paramGrid, bestResults)
-~~~
-{: .language-r}
-
-0.602 (.9,.6)
-.603  (.8, .9)
-
-## Try tuning gamma?
-
-
-~~~
-source("loadwinedata.R")
-paramGrid <- expand.grid(
-  gamma = seq(0, 0.1, by = 0.01)
-)
-paramList <- lapply(split(paramGrid, 1:nrow(paramGrid)), as.list)
-bestResults <- tibble()
-set.seed(2341)
-for(i in seq(length(paramList))) {
-  cat("   #", i, "of", length(paramList))
-  gbmod <- xgb.cv(params = c(paramList[[i]], 
-                             max_depth = 28, 
-                             max_leaves = 255,
-                             subsample = 0.9,
-                             colsample_bytree = 0.6,
-                             eta = 0.1, # for parameter tuning
-                             objective = "reg:squarederror",
-                             tree_method = "hist"), 
-                  data = dtrain, 
-                  nrounds = 500, 
-                  nfold = 10,
-                  early_stopping_rounds = 10,
-                  verbose = FALSE,
-                  print_every_n = 10)
-  gc()
-  bestResults <- rbind(bestResults, gbmod$evaluation_log[gbmod$best_iteration])
-}
-cat("Finished.\n")
-gammatest <- bind_cols(paramGrid, bestResults)
-~~~
-{: .language-r}
-
-gamma = 0.06 gives a little bit of improvement.
-
-## Final check against test set
-
-
-~~~
-gbmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 10000,
-               early_stopping_rounds = 50,
-               max_depth = 28,
-               max_leaves = 255,
-               subsample = 0.9,
-               colsample_bytree = 0.6,
-               gamma = 0.06,
-               eta = 0.001
-               )
-gbmod$evaluation_log %>% 
-  pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
-  ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
-tail(gbmod$evaluation_log)
-~~~
-{: .language-r}
-Best so far: test_rmse = 0.614885. 
-
-
-
-~~~
-pww <- predict(gbmod, as.matrix(select(testDF, -quality)))
-gbErrors <- pww - testDF$quality
-tibble(`Predicted Quality` = pww, Error = gbErrors) %>%
-  ggplot(aes(x = `Predicted Quality`, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-~~~
-{: .language-r}
-
-
-
-
-## Challenge: Can you beat this tutorial?
-
-## Facebook data: overfitting ok?
-
-Data from UCI: https://archive.ics.uci.edu/ml/machine-learning-databases/00363/
-
-Cambridge Spark tutorial: https://blog.cambridgespark.com/hyperparameter-tuning-in-xgboost-4ff9100a3b2f
-
-
-~~~
-library(tidyverse)
-library(here)
-facebook <- read_csv(here("data", "facebook_comments", "Features_Variant_1.csv"), 
-                     col_names = FALSE)
-trainSize <- round(0.90 * nrow(facebook))
-set.seed(123) 
-trainIndex <- sample(nrow(facebook), trainSize)
-trainDF <- facebook %>% dplyr::slice(trainIndex)
-testDF <- facebook %>% dplyr::slice(-trainIndex)
-  
-library(xgboost)
-dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -X54)), label = trainDF$X54)
-dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -X54)), label = testDF$X54)
-watch <- list(train = dtrain, test = dtest)
-
-mean(abs(testDF$X54 - mean(trainDF$X54))) # should be 11.31?
-~~~
-{: .language-r}
-
-
-~~~
-fmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 1000,
-               early_stopping_rounds = 10,
-               max_depth = 6,
-               min_child_weight = 1,
-               eta = 0.3,
-               subsample = 1,
-               colsample_bytree = 1,
-               objective = "reg:squarederror", # reg:linear is deprecated
-               eval_metric = "mae"
-               )
-print(fmod) # MAE is a little different (4.31 in tutorial)
-~~~
-{: .language-r}
-
-
-~~~
-fmod$evaluation_log %>% 
-  pivot_longer(cols = c(train_mae, test_mae), names_to = "MAE") %>% 
-  ggplot(aes(x = iter, y = value, color = MAE)) + geom_line()
-tail(fmod$evaluation_log)
-~~~
-{: .language-r}
-Indeed there is quite a lot of overfitting.
-
-
-~~~
-predX54 <- predict(fmod, as.matrix(select(testDF, -X54)))
-gbErrors <- predX54 - testDF$X54
-tibble(Predicted = predX54, Error = gbErrors) %>%
-  ggplot(aes(x = Predicted, y = Error))  +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 0, intercept = 0) +
-  theme_bw()
-~~~
-{: .language-r}
-
-Here's the "tuned" model:
-
-
-~~~
-fmod <- xgb.train(data = dtrain, watchlist = watch, verbose = 0,
-               nrounds = 1000,
-               early_stopping_rounds = 10,
-               max_depth = 10,
-               min_child_weight = 6,
-               eta = 0.01,
-               subsample = 0.8,
-               colsample_bytree = 1,
-               objective = "reg:squarederror", # reg:linear is deprecated
-               eval_metric = "mae"
-               )
-print(fmod) # MAE is a little different (3.90 in tutorial)
-~~~
-{: .language-r}
-
-
-~~~
-fmod$evaluation_log %>% 
-  pivot_longer(cols = c(train_mae, test_mae), names_to = "MAE") %>% 
-  ggplot(aes(x = iter, y = value, color = MAE)) + geom_line()
-tail(fmod$evaluation_log)
-~~~
-{: .language-r}
-
-Overfitting has improved somewhat, but it's still there. 

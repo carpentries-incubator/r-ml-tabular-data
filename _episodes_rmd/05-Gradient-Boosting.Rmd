@@ -114,9 +114,9 @@ redwineXGB$evaluation_log %>%
 
 ## Learning Rate
 
-Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a parameter that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum answer.
+Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a parameter that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum fit.
 
-In XGBoost, the parameter that controls the learning rate is called `eta`. It's default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
+In XGBoost, the parameter that controls the learning rate is called `eta`. Its default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
 
 The following code will set `eta` to its default value. We include a value for `early_stopping_rounds`, which will halt the training after a specified number of iterations pass without improvement. When using `early_stopping_rounds`, `nrounds` can be set to a very large number. To avoid printing too many lines of output, we also set a value for `print_every_n`.
 
@@ -176,7 +176,6 @@ redwineXGB <- xgb.train(data = dtrain,
                         nrounds = 1000,
                         early_stopping_rounds = 10,
                         print_every_n = 15)
-xgb.importance(model = redwineXGB)
 redwineXGB$evaluation_log %>% 
   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
@@ -187,7 +186,7 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 
 > ## Challenge: White Wine
 >
-> Build an XGBoost model for the white wine data (rows 600-6497) of the
+> Build an XGBoost model for the white wine data (rows 1600-6497) of the
 > `wine` data frame. Compare the accuracy and variable importance with 
 > the random forest white wine model from the previous episode.
 >
@@ -200,8 +199,10 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 > > trainIndex <- sample(nrow(whitewine), trainSize)
 > > trainDF <- whitewine %>% dplyr::slice(trainIndex)
 > > testDF <- whitewine %>% dplyr::slice(-trainIndex)
-> > dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
-> > dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+> > dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), 
+> >                       label = trainDF$quality)
+> > dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), 
+> >                      label = testDF$quality)
 > > whitewineXGB <- xgb.train(data = dtrain, 
 > >                           params = list(eta = 0.1),
 > >                           watchlist = list(train = dtrain, test = dtest), 
@@ -214,8 +215,8 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 > >   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
 > > ```
 > > 
-> > The testing set accuracy is slightly worse than what we obtained in the 
-> > random forest model. The important explanatory variables are similar.
+> > The testing set RMSE (0.664) is worse than what we obtained in the 
+> > random forest model (0.63). The important explanatory variables are similar.
 > > 
 > {: .solution}
 {: .challenge}

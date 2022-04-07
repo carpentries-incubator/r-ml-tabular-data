@@ -207,9 +207,9 @@ redwineXGB$evaluation_log %>%
 
 ## Learning Rate
 
-Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a parameter that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum answer.
+Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a parameter that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum fit.
 
-In XGBoost, the parameter that controls the learning rate is called `eta`. It's default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
+In XGBoost, the parameter that controls the learning rate is called `eta`. Its default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
 
 The following code will set `eta` to its default value. We include a value for `early_stopping_rounds`, which will halt the training after a specified number of iterations pass without improvement. When using `early_stopping_rounds`, `nrounds` can be set to a very large number. To avoid printing too many lines of output, we also set a value for `print_every_n`.
 
@@ -348,31 +348,6 @@ Stopping. Best iteration:
 
 
 ~~~
-xgb.importance(model = redwineXGB)
-~~~
-{: .language-r}
-
-
-
-~~~
-                 Feature       Gain      Cover  Frequency
- 1:              alcohol 0.33236129 0.11264259 0.07936508
- 2:     volatile.acidity 0.12367170 0.09820458 0.11922399
- 3:            sulphates 0.10975935 0.10726694 0.08218695
- 4: total.sulfur.dioxide 0.07500529 0.13655797 0.09276896
- 5:              density 0.05960668 0.09451465 0.08500882
- 6:            chlorides 0.05883225 0.10318293 0.09805996
- 7:       residual.sugar 0.05499778 0.09106117 0.08818342
- 8:        fixed.acidity 0.05087633 0.07920964 0.14250441
- 9:                   pH 0.04772447 0.06078573 0.06807760
-10:          citric.acid 0.04532904 0.07698668 0.07830688
-11:  free.sulfur.dioxide 0.04183582 0.03958713 0.06631393
-~~~
-{: .output}
-
-
-
-~~~
 redwineXGB$evaluation_log %>% 
   pivot_longer(cols = c(train_rmse, test_rmse), names_to = "RMSE") %>% 
   ggplot(aes(x = iter, y = value, color = RMSE)) + geom_line()
@@ -386,7 +361,7 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 
 > ## Challenge: White Wine
 >
-> Build an XGBoost model for the white wine data (rows 600-6497) of the
+> Build an XGBoost model for the white wine data (rows 1600-6497) of the
 > `wine` data frame. Compare the accuracy and variable importance with 
 > the random forest white wine model from the previous episode.
 >
@@ -400,8 +375,10 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 > > trainIndex <- sample(nrow(whitewine), trainSize)
 > > trainDF <- whitewine %>% dplyr::slice(trainIndex)
 > > testDF <- whitewine %>% dplyr::slice(-trainIndex)
-> > dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), label = trainDF$quality)
-> > dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), label = testDF$quality)
+> > dtrain <- xgb.DMatrix(data = as.matrix(select(trainDF, -quality)), 
+> >                       label = trainDF$quality)
+> > dtest <- xgb.DMatrix(data = as.matrix(select(testDF, -quality)), 
+> >                      label = testDF$quality)
 > > whitewineXGB <- xgb.train(data = dtrain, 
 > >                           params = list(eta = 0.1),
 > >                           watchlist = list(train = dtrain, test = dtest), 
@@ -415,8 +392,8 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 > > ~~~
 > > {: .language-r}
 > > 
-> > The testing set accuracy is slightly worse than what we obtained in the 
-> > random forest model. The important explanatory variables are similar.
+> > The testing set RMSE (0.664) is worse than what we obtained in the 
+> > random forest model (0.63). The important explanatory variables are similar.
 > > 
 > {: .solution}
 {: .challenge}
