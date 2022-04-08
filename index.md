@@ -28,4 +28,9 @@ should be familiar with data analysis and visualization in R.
 > example. 
 {: .prereq}
 
+> ## For Instructors
+> If you are teaching this lesson in a workshop, please see the
+> [Instructor notes](guide/).
+{: .prereq}
+
 {% include links.md %}

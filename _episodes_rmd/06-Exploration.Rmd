@@ -73,7 +73,8 @@ names(rwCV)
 
 > ## Challenge: Examine the cross validation results
 >
-> 1. Examine item `rwCV$folds`. What do suppose these numbers represent? 
+> 1. Examine the list item `rwCV$folds`. 
+>    What do suppose these numbers represent? 
 >    Are all the folds the same size? Can you explain why/why not?
 > 2. Display the evaluation log with rows sorted by `test_rmse_mean`.
 > 3. How could you display only the row containing the best iteration?
@@ -85,13 +86,13 @@ names(rwCV)
 > >    are 1279 rows total in the training set, so they don't divide evenly into
 > >    10 partitions.
 > > 2. 
-> > ```{r}
-> > rwCV$evaluation_log %>% arrange(test_rmse_mean)
-> > ```
+> >     ```{r}
+> >     rwCV$evaluation_log %>% arrange(test_rmse_mean)
+> >     ```
 > > 3. 
-> > ```{r}
-> > rwCV$evaluation_log[rwCV$best_iteration]
-> > ```
+> >     ```{r}
+> >     rwCV$evaluation_log[rwCV$best_iteration]
+> >     ```
 > > 
 > {: .solution}
 {: .challenge}
@@ -131,7 +132,7 @@ for(i in seq(length(paramList))) {
 close(pb) # done with the progress bar
 ```
 
-We now have all of the best iterations in the `bestResults` data frame, which we now combine with the data frame of parameter values.
+We now have all of the best iterations in the `bestResults` data frame, which we can combine with the data frame of parameter values.
 
 ```{r, eval = FALSE}
 etasearch <- bind_cols(paramDF, bestResults)
