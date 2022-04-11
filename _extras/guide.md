@@ -4,7 +4,7 @@ title: "Instructor Notes"
 
 ## Episode 1: A Brief Introduction to Machine Learning
 
-The emphasis here is on brief, and this episode can be done quickly. The lesson deals with some general machine learning concepts using some particular tools that should be of interest to researchers in a range of disciplines. We don't claim to present a comprehensive overview of machine learning. Rather, the goal is to give learners some experience with the techniques they need to apply machine learning to their work. 
+The emphasis here is on "brief." This episode can be done quickly. The lesson deals with some general machine learning concepts using some particular tools that should be of interest to researchers in a range of disciplines. We don't claim to present a comprehensive overview of machine learning. Rather, the goal is to give learners some experience with the techniques they need to apply machine learning to their work. 
 
 The coding here is minimal, but the `kyphosis` data set is introduced to provide a simple example of the framework for supervised learning. Try to use these easy examples to set the tone for live coding and interaction.
 
