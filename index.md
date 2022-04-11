@@ -8,7 +8,7 @@ editor_options:
 ---
 
 This lesson introduces a selection of machine learning techniques for
-analyzing tabular data, including decision forests and gradient boosted
+analyzing tabular data, including random forests and gradient boosted
 trees. No experience in machine learning is necessary, but learners
 should be familiar with data analysis and visualization in R.
 

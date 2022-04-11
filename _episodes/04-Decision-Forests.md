@@ -530,7 +530,7 @@ No. of variables tried at each split: 3
 ~~~
 {: .output}
 
-The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as 1 - MSE/Var(y). The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with decision forests.
+The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as 1 - MSE/Var(y). The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with random forests.
 
 We conclude this episode with a series of challenges.
 

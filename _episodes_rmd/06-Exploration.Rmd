@@ -105,7 +105,7 @@ To expedite the tuning process, it helps to design a loop to run repeated cross 
 paramDF <- tibble(eta = c(0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4))
 ```
 
-The following command converts a data frame to a list of lists. Each item in this list will be a different valid parameter setting that we can use in the `xgb.cv` function.
+The following command converts a data frame to a list of lists. The `split` function splits `paramDF` into a list of its rows, and then the `lapply` function converts each row to a list. Each item of `paramlist` will be a list giving a valid parameter setting that we can use in the `xgb.cv` function.
 
 ```{r, eval = FALSE}
 paramList <- lapply(split(paramDF, 1:nrow(paramDF)), as.list)
@@ -150,7 +150,7 @@ We will tune the parameters `max_depth` and `max_leaves` together. These both af
 
 ```{r, eval = FALSE}
 paramDF <- expand.grid(
-  max_depth = seq(15, 30, by = 2),
+  max_depth = seq(15, 29, by = 2),
   max_leaves = c(63, 127, 255, 511, 1023, 2047, 4095),
   eta = 0.1)
 ```
@@ -178,7 +178,7 @@ close(pb)
 depth_leaves <- bind_cols(paramDF, bestResults)
 ```
 
-When we `View(depth_leaves)` we see that a choice of `max_depth` = 21 and `max_leaves` = 4095 results in the best `test_rmse_mean`. One caveat is that cross validation is a random process, so running this code with a different random seed may very well produce a different result. However, there are several results with `max_depth` in the 20s and `max_leaves` in the 1000s, so we can be pretty sure that our choice these parameter values is sound.
+When we `View(depth_leaves)` we see that a choice of `max_depth` = 21 and `max_leaves` = 4095 results in the best `test_rmse_mean`. One caveat is that cross validation is a random process, so running this code with a different random seed may very well produce a different result. However, there are several comparable results with `max_depth` in the 20s and `max_leaves` in the 1000s, so we can be pretty sure that our choice these parameter values is sound.
 
 > ## Challenge: Write a Grid Search Function
 >
