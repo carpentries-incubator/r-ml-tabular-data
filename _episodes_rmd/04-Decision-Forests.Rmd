@@ -294,7 +294,7 @@ We conclude this episode with a series of challenges.
 >
 > As with classification models, setting `importance = TRUE` in a call to `randomForest`
 > will use the OOB errors to measure variable importance. In the regression case,
-> the decrease in accuracy when a variable is permuted is measured by the percentage
+> the decrease in performance when a variable is permuted is measured by the percentage
 > increase in MSE (`%IncMSE`). The larger the `%IncMSE`, the more important the
 > variable.
 >
