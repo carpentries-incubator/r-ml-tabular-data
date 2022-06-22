@@ -30,7 +30,7 @@ Broadly speaking, *machine learning* encompasses a range of techniques and algor
 
 Given a data frame, we will build machine learning models as follows.
 
-1. Divide the data set into a *training set* and a *testing set*. Typically the training set will contain about 75% of the rows, and the testing set comprises the remaining rows. This train/test split is selected randomly.
+1. Divide the data set into a *training set* and a *testing set*. Typically the training set will contain about 60% to 80% of the rows, while the testing set comprises the remaining rows. This train/test split is selected randomly.
 
 2. *Train* the model on the training set. Part of this process may involve *tuning*: tweaking various model settings (i.e., *hyperparameters*) for optimal performance.
 

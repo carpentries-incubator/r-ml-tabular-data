@@ -25,7 +25,7 @@ knitr_fig_path("05-")
 
 A random forest is called an *ensemble* method, because it combines the results of a set of trees to form a single prediction. *Gradient boosted trees* are also ensemble methods, but instead of forming a forest of trees from different random samples, they grow successive trees that systematically reduce the error of the model at each iteration.
 
-We will be using the R package `xgboost`, which gives a fast, scalable implementation of a gradient boosting framework. For more information on how `xgboost` works, see the [XGBoost Presentation](https://cran.r-project.org/web/packages/xgboost/vignettes/xgboostPresentation.html) vignette and the [Introduction to Boosted Trees](https://xgboost.readthedocs.io/en/stable/tutorials/model.html) tutorial in the XGBoost documentation.
+We will be using the R package `xgboost`, which gives a fast, scalable implementation of a gradient boosting framework. For more information on how `xgboost` works, see the [XGBoost Presentation](https://cran.r-project.org/web/packages/xgboost/vignettes/xgboostPresentation.html) vignette and the [Introduction to Boosted Trees](https://xgboost.readthedocs.io/en/stable/tutorials/model.html) tutorial in the XGBoost documentation. In this episode we will use XGBoost to create a regression model, but this framework can also be used for classification problems.
 
 ## Reload the Red Wine Data
 
@@ -114,9 +114,9 @@ redwineXGB$evaluation_log %>%
 
 ## Learning Rate
 
-Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a parameter that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum fit.
+Machine learning algorithms that reduce a loss function over a sequence of iterations typically have a setting that controls the *learning rate*. A smaller learning rate will generally reduce the error by a smaller amount at each iteration, and therefore will require more iterations to arrive at a given level of accuracy. The advantage to a smaller learning rate is that the algorithm is less likely to overshoot the optimum fit.
 
-In XGBoost, the parameter that controls the learning rate is called `eta`. Its default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
+In XGBoost, the setting that controls the learning rate is called `eta`, which is one of several *hyperparameters* that can be adjusted. Its default value is 0.3, but smaller values will usually perform better. It must take a value in the range 0 < `eta` < 1. 
 
 The following code will set `eta` to its default value. We include a value for `early_stopping_rounds`, which will halt the training after a specified number of iterations pass without improvement. When using `early_stopping_rounds`, `nrounds` can be set to a very large number. To avoid printing too many lines of output, we also set a value for `print_every_n`.
 
@@ -163,9 +163,9 @@ xgb.importance(model = redwineXGB)
 
 The rows are sorted by `Gain`, which measures the accuracy improvement contributed by a feature based on all the splits it determines. Note that the sum of all the gains is 1.
 
-## Training Accuracy vs. Testing Accuracy
+## Training Error vs. Testing Error
 
-Like many machine learning algorithms, gradient boosting operates by minimizing the error on the training set. However, we evaluate its accuracy by computing the error on the testing set. These two errors are usually different, and it is not uncommon to have much lower training RMSE than testing RMSE. 
+Like many machine learning algorithms, gradient boosting operates by minimizing the error on the training set. However, we evaluate its performance by computing the error on the testing set. These two errors are usually different, and it is not uncommon to have much lower training RMSE than testing RMSE. 
 
 To see both training and testing errors, we can add a `train` item to the `watchlist`.
 
@@ -187,7 +187,7 @@ Notice that beyond iteration 40 or so, the training RMSE continues to decrease w
 > ## Challenge: White Wine
 >
 > Build an XGBoost model for the white wine data (rows 1600-6497) of the
-> `wine` data frame. Compare the accuracy and variable importance with 
+> `wine` data frame. Compare the RMSE and variable importance with 
 > the random forest white wine model from the previous episode.
 >
 > > ## Solution
