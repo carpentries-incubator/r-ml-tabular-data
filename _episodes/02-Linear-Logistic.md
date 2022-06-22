@@ -7,14 +7,14 @@ teaching: 35
 exercises: 10
 questions:
 - "How can a model make predictions?"
-- "How do we measure the accuracy of predictions?"
+- "How do we measure the performance of predictions?"
 objectives:
 - "Define a linear regression model."
 - "Define a logistic regression model."
 - "Split data into training and testing sets."
 keypoints:
 - "Classical linear and logistic regression models can be thought of as examples of regression and classification models in machine learning."
-- "Testing sets can be used to measure the accuracy of a model."
+- "Testing sets can be used to measure the performance of a model."
 ---
 
 
@@ -189,7 +189,7 @@ predictedStart <- predict(model1, testDF)
 > {: .solution}
 {: .challenge}
 
-In general, the value of `Start` predicted by the model will not equal the actual value of `Start` in the testing set. However, in an accurate model, we would hope that the predicted values will be close to the actual values. To assess how close our predictions are to reality, we compute a vector of errors: predicted values minus actual values.
+In general, the value of `Start` predicted by the model will not equal the actual value of `Start` in the testing set. However, in a good model, we would hope that the predicted values will be close to the actual values. To assess how close our predictions are to reality, we compute a vector of errors: predicted values minus actual values.
 
 
 ~~~
@@ -362,7 +362,7 @@ testDF$Kyphosis == predictedKyphosis
 ~~~
 {: .output}
 
-One way to measure the accuracy of a classification model is to report the proportion of correct predictions. Recall that the `sum` function, when applied to a logical vector, will return the number of `TRUE`s in the vector.
+One way to measure the performance of a classification model is to report the proportion of correct predictions, known as the *accuracy* of the model. Recall that the `sum` function, when applied to a logical vector, will return the number of `TRUE`s in the vector.
 
 
 ~~~

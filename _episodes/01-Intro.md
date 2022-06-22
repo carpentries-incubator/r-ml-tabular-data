@@ -29,11 +29,11 @@ Broadly speaking, *machine learning* encompasses a range of techniques and algor
 
 Given a data frame, we will build machine learning models as follows.
 
-1. Divide the data set into a *training set* and a *testing set*. Typically the training set will contain about 80% of the rows, and the testing set comprises the remaining rows. This train/test split is selected randomly.
+1. Divide the data set into a *training set* and a *testing set*. Typically the training set will contain about 75% of the rows, and the testing set comprises the remaining rows. This train/test split is selected randomly.
 
-2. *Train* the model on the training set. Part of this process may involve *tuning*: tweaking various model settings for optimal performance.
+2. *Train* the model on the training set. Part of this process may involve *tuning*: tweaking various model settings (i.e., *hyperparameters*) for optimal performance.
 
-3. *Test* the accuracy of the model using the testing set. Since the testing set was not used in the training of the model, the testing accuracy will be a good indication of how well our model will perform on future (unknown) input values.
+3. *Test* the performance of the model using the testing set. Since the testing set was not used in the training of the model, the testing performance will be a good indication of how well our model will perform on future (unknown) input values.
 
 Once our model is built, we can use it to *predict* output values from new cases of input, and we can also examine the structure of the model to *infer* the nature of the relationship between the input and the output.
 
@@ -107,7 +107,7 @@ ggplot(kyphosis, aes(x = Number, y = Start)) + geom_point()
 
 ## Classification vs. Regression
 
-In the jargon of machine learning, a model that predicts a categorical output variable is called a *classification* model, while one that predicts a quantitative output is called a *regression* model. Note: this terminology conflicts slightly with the common use of the term "regression" in statistics.
+In the jargon of machine learning, a model that predicts a categorical output variable is called a *classification* model, while one that predicts a quantitative (numeric) output is called a *regression* model. Note: this terminology conflicts slightly with the common use of the term "regression" in statistics.
 
 ## Our Focus
 

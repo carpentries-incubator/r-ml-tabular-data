@@ -150,8 +150,8 @@ testDF <- redwineClass %>% slice(-trainIndex)
 
 A *random forest* model combines several decision tree models as follows.
 
-* Several different decision trees are built, each from a random bootstrap sample of the same size as the original data.
-* A randomly-chosen subset of variables is chosen to determine each split.
+* Several different decision trees are built, each from a random bootstrap sample of the same size as the original data. This process is also known as *bagging* (bootstrap aggregation).
+* For each tree model, a randomly-chosen subset of variables is chosen to determine each split.
 * Each decision tree model makes a prediction, and the category with the most "votes" is selected as the prediction of the random forest.
 
 More details can be found in [Breiman's 2002 paper](https://www.stat.berkeley.edu/~breiman/Using_random_forests_V3.1.pdf), pages 8-9.
@@ -271,7 +271,7 @@ good 140  715   0.1637427
 ~~~
 {: .output}
 
-*Caveat:* If you plan to "tune" your model by adjusting the optional parameters in `randomForest`, it is still good practice to set aside a testing set for assessing model accuracy after the model has been tuned using only the training data.
+*Caveat:* If you plan to "tune" your model by adjusting the optional parameters in `randomForest`, it is still good practice to set aside a testing set for assessing model accuracy after the model has been tuned using only the training data. A train/test split is also helpful if you want to compare random forest models with other types of models.
 
 ## Variable Importance
 
@@ -468,7 +468,7 @@ head(predictedQuality)
 ~~~
 {: .output}
 
-Since this is a regression model, we assess its accuracy using the root mean squared error (RMSE).
+Since this is a regression model, we assess its performance using the root mean squared error (RMSE).
 
 
 ~~~
@@ -530,7 +530,7 @@ No. of variables tried at each split: 3
 ~~~
 {: .output}
 
-The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as 1 - MSE/Var(y). The OOB MSE should be close to the MSE on the testing set. So again, you don't really need a train/test split when working with random forests.
+The `Mean of squared residuals` is the MSE of the out-of-bag errors. The `% Var explained` term is a "pseudo R-squared", computed as 1 - MSE/Var(y). The OOB MSE should be close to the MSE on the testing set. So again, you don't always need a train/test split when working with random forests.
 
 We conclude this episode with a series of challenges.
 

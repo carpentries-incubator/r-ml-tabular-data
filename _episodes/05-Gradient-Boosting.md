@@ -121,7 +121,7 @@ redwineXGB <- xgb.train(data = dtrain, watchlist = list(test = dtest), nrounds =
 
 
 ~~~
-[1]	test-rmse:3.676491 
+[1]	test-rmse:3.676492 
 [2]	test-rmse:2.620643 
 [3]	test-rmse:1.904736 
 [4]	test-rmse:1.414777 
@@ -168,7 +168,7 @@ redwineXGB$evaluation_log %>%
 > > 
 > > 
 > > ~~~
-> > [1]	test-rmse:3.676491 
+> > [1]	test-rmse:3.676492 
 > > [2]	test-rmse:2.620643 
 > > [3]	test-rmse:1.904736 
 > > [4]	test-rmse:1.414777 
@@ -186,7 +186,7 @@ redwineXGB$evaluation_log %>%
 > > [16]	test-rmse:0.636140 
 > > [17]	test-rmse:0.640103 
 > > [18]	test-rmse:0.640305 
-> > [19]	test-rmse:0.640570 
+> > [19]	test-rmse:0.640569 
 > > [20]	test-rmse:0.637183 
 > > ~~~
 > > {: .output}
@@ -227,7 +227,7 @@ redwineXGB <- xgb.train(data = dtrain,
 
 
 ~~~
-[1]	test-rmse:3.676491 
+[1]	test-rmse:3.676492 
 Will train until test_rmse hasn't improved in 10 rounds.
 
 [6]	test-rmse:0.913236 
@@ -265,7 +265,7 @@ The 14th iteration had the smallest RMSE, as we found in the previous challenge.
 > > 
 > > 
 > > ~~~
-> > [1]	test-rmse:4.689982 
+> > [1]	test-rmse:4.689984 
 > > Will train until test_rmse hasn't improved in 10 rounds.
 > > 
 > > [16]	test-rmse:1.164598 
@@ -331,7 +331,7 @@ redwineXGB <- xgb.train(data = dtrain,
 
 
 ~~~
-[1]	train-rmse:4.690114	test-rmse:4.689982 
+[1]	train-rmse:4.690120	test-rmse:4.689984 
 Multiple eval metrics are present. Will use test_rmse for early stopping.
 Will train until test_rmse hasn't improved in 10 rounds.
 
