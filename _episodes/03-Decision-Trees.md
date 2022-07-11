@@ -303,8 +303,8 @@ In general, the accuracy on the testing set will be less than the accuracy on th
 > {: .solution}
 {: .challenge}
 
-## Sensitivity
+## Robustness, or lack thereof
 
-In this episode we have seen that the structure of the decision tree can vary quite a bit when we make small changes to the training data. Training the model on the whole data set resulted in a very different tree than what we obtained by training on a slightly smaller testing set. And changing the choice of testing set, even while maintaining its size, also altered the tree structure. When the structure of a model changes significantly for a small change in the training data, we say that the model is *sensitive* to changes in the data. Sensitivity can be a problem, because one or two unusual observations can make a big difference in the conclusions we draw. In the next episode, we will explore *random forests*, which are less sensitive than individual decision tree models.
+In this episode we have seen that the structure of the decision tree can vary quite a bit when we make small changes to the training data. Training the model on the whole data set resulted in a very different tree than what we obtained by training on a slightly smaller testing set. And changing the choice of testing set, even while maintaining its size, also altered the tree structure. When the structure of a model changes significantly for a small change in the training data, we say that the model is not *robust*. Non-robustness can be a problem, because one or two unusual observations can make a big difference in the conclusions we draw. In the next episode, we will explore *random forests*, which are more robust than individual decision tree models.
 
 
