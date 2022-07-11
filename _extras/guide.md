@@ -26,9 +26,17 @@ This episode introduces decision trees, which will be the basis for the more com
 
 Consider having learners work on challenges in groups, especially for the third challenge (Predicted Probabilities).
 
+We conclude this episode with a brief discussion of the problem of non-robustness in decision tree models. To avoid information overload, it is probably best to avoid discussion of the *bias-variance trade-off* at this point. A general discussion of the issues involved appears in the introduction to Episode 6, along with a link to a good reference on the subject. 
+
 ## Episode 4: Random Forests
 
 Instructions for downloading the wine data are on the [setup](../setup.html) page. The methods we will consider are often used on data sets with more rows and columns, but we are using this relatively small data set to avoid memory and time constraints.
+
+The following single line gives an alternative way to construct `rwpred` in the solution to the first challenge. However, it is important for learners to encounter the solution given in the lesson, because `predict` methods for classification models will often return probabilities instead of classes.
+
+```r
+rwpred <- predict(rwtree, testDF, type = "class")
+```
 
 Of the last three challenges, the most important for future episodes is the White Wine challenge, because we plan to compare the RMSE of random forests with gradient boosted trees, before and after tuning.
 
