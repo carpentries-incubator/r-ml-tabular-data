@@ -12,9 +12,10 @@ questions:
 objectives:
 - "Introduce decision trees and recursive partitioning."
 - "Revisit the Kyphosis example using a classification tree."
+- "Illustrate the use of training and testing sets."
 keypoints:
 - "Training data can give us a decision tree model."
-- "Decision trees are sensitive to changes in the training set."
+- "Decision trees can be used for supervised learning, but they are not very robust."
 ---
 
 
@@ -237,6 +238,7 @@ testPredictions <- testDF %>%
 
 ## Testing set accuracy
 
+Recall that in supervised learning, we use the *testing set* to see how our model performs on data it was not trained on.
 To check the testing set accuracy, we can compare the first column of this matrix to 0.5 and assign the appropriate value of the `Kyphosis` variable.
 
 

@@ -2,7 +2,7 @@
 source: Rmd
 title: "Linear and Logistic Regression"
 teaching: 35
-exercises: 10
+exercises: 15
 questions:
 - "How can a model make predictions?"
 - "How do we measure the performance of predictions?"
@@ -74,7 +74,7 @@ The predicted `Start` is obtained by multiplying `Number` by the regression slop
 
 > ## Challenge: Make a prediction
 >
-> Predict the number of the topmost vertebra when the number of
+> Predict the starting vertebra when the number of
 > vertebrae involved is 3.
 >
 > > ## Solution
@@ -154,7 +154,11 @@ In upcoming episodes, we will compare different regression models using the RMSE
 
 ## Logistic Regression
 
-In the previous episode, we observed that in the context of the kyphosis data, it would be natural to try to predict whether a post-op kyphosis will be present, given the age of the patient, the number of vertebrae involved, and the number of the first vertebra operated on. In this situation, `Kyphosis` is our categorical response variable, and `Age`, `Number`, and `Start` are the explanatory variables. 
+In the previous episode, we observed that in the context of the kyphosis data, it would be natural to try to predict whether a post-op kyphosis will be present, given the age of the patient, the number of vertebrae involved, and the number of the first vertebra operated on. In this situation, `Kyphosis` is our categorical response variable, and `Age`, `Number`, and `Start` are the explanatory variables. You can see the *levels* of the `Kyphosis` variable with the following command.
+
+```{r}
+levels(kyphosis$Kyphosis)
+```
 
 Since our response variable is categorical, we need to employ a *classification* model. The following command will fit a [Multiple Logistic Regression](https://rcompanion.org/rcompanion/e_07.html) model to our training data using the `glm` command.
 
@@ -177,12 +181,7 @@ predict(model2, testDF, type = "response")
 ```
 
 If we actually want to know whether or not the model predicts that a kyphosis is present, we need to convert these probabilities to the appropriate levels of the `Kyphosis` variable. 
-
-```{r}
-levels(kyphosis$Kyphosis)
-```
-
-The first level corresponds to probabilities near zero, and the second level corresponds to probabilities near one. So we can create a vector of the predicted `Kyphosis` values of our testing set as follows.
+The first level, `absent`, corresponds to probabilities near zero, and the second level, `present`, corresponds to probabilities near one. So we can create a vector of the predicted `Kyphosis` values of our testing set as follows.
 
 ```{r}
 predictedKyphosis <- ifelse(predict(model2, testDF, type = "response") < 0.5,
