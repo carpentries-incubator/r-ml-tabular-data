@@ -48,11 +48,11 @@ rpart.plot(examTree)
 
 <img src="../fig/rmd-03-unnamed-chunk-3-1.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" width="612" style="display: block; margin: auto;" />
 
-The `rpart` function searches for the best way to split the data set into predicted values of the response variables, based on the explanatory variables. This [Introduction to Rpart](https://cran.r-project.org/web/packages/rpart/vignettes/longintro.pdf) has details on how the split is chosen. In this simple case, the `rpart` function was able to perfectly partition the data after only one split. We can tell `rpart.plot` to report the number of correctly-classified cases in each node by including the option `extra = 102`.
+The `rpart` function searches for the best way to split the data set into predicted values of the response variables, based on the explanatory variables. This [Introduction to Rpart](https://cran.r-project.org/web/packages/rpart/vignettes/longintro.pdf) has details on how the split is chosen. In this simple case, the `rpart` function was able to perfectly partition the data after only one split. We can tell `rpart.plot` to report the number of correctly-classified cases in each node by including the option `extra = 2`.
 
 
 ~~~
-rpart.plot(examTree, extra = 102)
+rpart.plot(examTree, extra = 2)
 ~~~
 {: .language-r}
 
@@ -67,19 +67,27 @@ In more complex situations, the algorithm will continue to create further splits
 > Use the `rpart` function to create a decision tree using the `kyphosis` data
 > set. As in the previous episode, the response variable is `Kyphosis`, and the
 > explanatory varables are the remaining columns `Age`, `Number`, and `Start`. 
-> Use `rpart.plot` to plot your tree model.
-> How many of the 81 cases does this tree classify incorrectly?
+> 1. Use `rpart.plot` to plot your tree model. 
+> 2. Use this tree to predict the value of `Kyphosis` when `Start` is 12, 
+>    `Age` is 59, and `Number` is 6.
+> 3. How many of the 81 cases in the data set does this tree classify incorrectly?
 >
 > > ## Solution
 > > 
 > > 
 > > ~~~
 > > ktree <- rpart(Kyphosis ~ ., data = kyphosis)
-> > rpart.plot(ktree, extra = 102)
+> > rpart.plot(ktree, extra = 2)
 > > ~~~
 > > {: .language-r}
 > > 
 > > <img src="../fig/rmd-03-unnamed-chunk-5-1.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" width="612" style="display: block; margin: auto;" />
+> > 
+> > To make a prediction using this tree, start at the top node. Since `Start` is 12,
+> > and 12 >= 9, we follow the left (yes) edge. Since `Start` is not >= 15, we then 
+> > follow the right (no) edge. Since `Age` is 59 and 59 is not < 55, we follow the 
+> > right edge. Finally, since `Age` is not >= 111 we follow the right edge to the 
+> > leaf and obtain the prediction `present`.
 > > 
 > > In the two leftmost leaves, all of the cases are classified correctly. However,
 > > in the three remaining leaves, there are 2, 3, and 8 incorrectly classified
@@ -107,7 +115,7 @@ Now train the decision tree model on the training set
 
 ~~~
 treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF)
-rpart.plot(treeModel, extra = 102)
+rpart.plot(treeModel, extra = 2)
 ~~~
 {: .language-r}
 
@@ -177,29 +185,29 @@ predict(treeModel, testDF)
 ~~~
 {: .output}
 
-To investigate the behavior of this model, bind the columns of the predicted probabilities to the testing set.
+To investigate the behavior of this model, we bind the columns of the predicted probabilities to the testing set data frame to create a new data frame called `predDF`.
 
 
 ~~~
 predMatrix <- predict(treeModel, testDF)
-testPredictions <- testDF %>% 
-  bind_cols(predMatrix, .name_repair = "minimal")
+predDF <- testDF %>% 
+  bind_cols(predMatrix)
 ~~~
 {: .language-r}
 
 > ## Challenge: Predicted probabilities
 >
-> Compare the results in the `testPredictions` data frame with the plot
+> Compare the results in the `predDF` data frame with the plot
 > of `treeModel`. Can you explain how the model is calculating the 
 > predicted probabilites?
 >
 > > ## Solution
 > > 
-> > Consider the first row of `testPredictions`. 
+> > Consider the first row of `predDF`. 
 > > 
 > > 
 > > ~~~
-> > testPredictions[1,]
+> > predDF[1,]
 > > ~~~
 > > {: .language-r}
 > > 
@@ -217,7 +225,7 @@ testPredictions <- testDF %>%
 > > 
 > > 
 > > ~~~
-> > testPredictions[8,]
+> > predDF[8,]
 > > ~~~
 > > {: .language-r}
 > > 
@@ -238,14 +246,20 @@ testPredictions <- testDF %>%
 
 ## Testing set accuracy
 
-Recall that in supervised learning, we use the *testing set* to see how our model performs on data it was not trained on.
-To check the testing set accuracy, we can compare the first column of this matrix to 0.5 and assign the appropriate value of the `Kyphosis` variable.
+Let's add a new column called `Prediction` to the `predDF` data frame that gives the model prediction (`absent` or `present`) for each row, based on the probability in the `absent` column of `predDF`.
 
 
 ~~~
-predictedKyphosis <- ifelse(predMatrix[,1] > 0.5, 
-                            "absent", "present")
-accuracy <- sum(testDF$Kyphosis == predictedKyphosis)/nrow(testDF)
+predDF <- predDF %>%
+  mutate(Prediction = ifelse(predDF$absent > 0.5, "absent", "present"))
+~~~
+{: .language-r}
+
+Recall that in supervised learning, we use the *testing set* to measure how our model performs on data it was not trained on. Since this model is a classification model, we compute `accuracy` as the proportion of correct predictions.
+
+
+~~~
+accuracy <- sum(predDF$Kyphosis == predDF$Prediction)/nrow(predDF)
 cat("Proportion of correct predictions: ", accuracy, "\n")
 ~~~
 {: .language-r}
@@ -275,11 +289,11 @@ In general, the accuracy on the testing set will be less than the accuracy on th
 > > trainDF <- kyphosis %>% slice(trainIndex)
 > > testDF <- kyphosis %>% slice(-trainIndex)
 > > treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF)
-> > rpart.plot(treeModel, extra = 102)
+> > rpart.plot(treeModel, extra = 2)
 > > ~~~
 > > {: .language-r}
 > > 
-> > <img src="../fig/rmd-03-unnamed-chunk-14-1.png" title="plot of chunk unnamed-chunk-14" alt="plot of chunk unnamed-chunk-14" width="612" style="display: block; margin: auto;" />
+> > <img src="../fig/rmd-03-unnamed-chunk-15-1.png" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" width="612" style="display: block; margin: auto;" />
 > > 
 > > Changing the seed for the train/test split resulted in a different 
 > > decision tree.
