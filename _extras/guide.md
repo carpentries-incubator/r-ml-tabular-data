@@ -50,7 +50,7 @@ Make sure to leave time for the White Wine challenge, because we want to compare
 
 This episode presents a somewhat systematic way to tune parameters in an XGBoost model, but it is not a comprehensive guide to the subject. In order to be prepared for questions, instructors should be familiar with the last four references in [the list](#references) at the end of the instructors guide.
 
-Some of the examples in this episode will take several minutes to run, depending on the speed of your computer. Instructors may wish to pare down the grid search candidates to save time. Have a plan for something to do while you wait for these examples to finish.
+Some of the examples in this episode will take several minutes to run, depending on the speed of your computer; be sure to test the examples ahead of time using the same computer you will teach with. Instructors may wish to pare down the grid search candidates to save time. Have a plan for something to do while you wait for these examples to finish.
 
 Learners may not recall/know how to write functions in R, so be prepared to help them with the second challenge. Mention that the function could also be written to allow other settings to be passed as additional arguments, if desired.
 

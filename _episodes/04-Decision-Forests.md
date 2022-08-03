@@ -3,7 +3,7 @@
 # Instead, please edit 04-Decision-Forests.md in _episodes_rmd/
 source: Rmd
 title: "Random Forests"
-teaching: 45 
+teaching: 60
 exercises: 30
 questions:
 - "What are random forests?"

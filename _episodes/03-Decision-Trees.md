@@ -3,7 +3,7 @@
 # Instead, please edit 03-Decision-Trees.md in _episodes_rmd/
 source: Rmd
 title: "Decision Trees"
-teaching: 30 
+teaching: 40 
 exercises: 15
 questions:
 - "What are decision trees?"
