@@ -2,7 +2,7 @@
 source: Rmd
 title: "Gradient Boosted Trees"
 teaching: 45 
-exercises: 20
+exercises: 25
 questions:
 - "What is gradient boosting?"
 - "How can we train an XGBoost model?"
