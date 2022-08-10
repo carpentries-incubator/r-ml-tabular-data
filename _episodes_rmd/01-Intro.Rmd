@@ -97,6 +97,8 @@ This lesson will focus on three machine learning methods that apply to both clas
 - Random Forests
 - Gradient Boosted Trees
 
-We will also briefly explore classical linear and logistic regression, which we can view as simple examples of supervised learning. 
+We will also briefly explore classical linear and logistic regression, which we can view as simple examples of supervised learning. We will not dwell on the mathematical theory or algorithmic details of these methods. Interested learners are encouraged to consult [An Introduction to Statistical Learning](https://www.statlearning.com/), by James, Witten, Hastie, and Tibshirani.
 
 One of the main goals of this lesson is to help learners develop their R coding skills, especially for the purpose of using the available machine learning packages on the Comprehensive R Archive Network (CRAN). We will focus on the packages `randomForest` and `xgboost`, but many other packages are described in the [CRAN Machine Learning Task View](https://cran.r-project.org/view=MachineLearning).
+
+
