@@ -48,6 +48,8 @@ Make sure to leave time for the White Wine challenge, because we want to compare
 
 ## Episode 6: Cross Validation and Tuning
 
+Instructors may wish to say more about the bias-variance tradeoff than is provided in the introduction to this episode. Roughly speaking, model performance can suffer from both "bias" and "variance", and decreasing one of these tends to increase the other. In this context, *bias* refers to the error inherent in modeling a complex situation with a simple model, while *variance* refers to the variability of the predictions due to the random choice of training data. If time permits and a whiteboard is available, consider comparing a simple linear regression model (low variance, high bias) with a more flexible model, e.g., smoothing spline (higher variance, lower bias). 
+
 This episode presents a somewhat systematic way to tune parameters in an XGBoost model, but it is not a comprehensive guide to the subject. In order to be prepared for questions, instructors should be familiar with the last four references in [the list](#references) at the end of the instructors guide.
 
 Some of the examples in this episode will take several minutes to run, depending on the speed of your computer; be sure to test the examples ahead of time using the same computer you will teach with. Instructors may wish to pare down the grid search candidates to save time. Have a plan for something to do while you wait for these examples to finish.
@@ -67,7 +69,7 @@ Advise learners to start with small grids when doing the final challenge, so tha
 - [Notes on XGBooost Parameter Tuning](https://xgboost.readthedocs.io/en/stable/tutorials/param_tuning.html)
 - [Documentation for XGBoost Parameters](https://xgboost.readthedocs.io/en/stable/parameter.html)
 {% include links.md %}
-- [An Introduction to Statistical Learning](https://hastie.su.domains/ISLR2/ISLRv2_website.pdf), by James, Witten, Hastie, and Tibshirani.
+- [An Introduction to Statistical Learning](https://www.statlearning.com/), by James, Witten, Hastie, and Tibshirani.
 - [Laurae++: notes on XGBoost/LightGBM parameters](https://sites.google.com/view/lauraepp/parameters)
 
 
