@@ -102,7 +102,7 @@ treeModel <- rpart(Kyphosis ~ Age + Number + Start, data = trainDF)
 rpart.plot(treeModel, extra = 2)
 ```
 
-Notice that we obtain a simpler tree using the testing set instead of the full data set.
+Notice that we obtain a simpler tree using the training set instead of the full data set.
 
 > ## Challenge: Training set accuracy
 >

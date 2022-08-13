@@ -8,7 +8,7 @@ questions:
 - "What specific tools will this lesson cover?"
 objectives:
 - "Give a brief definition of machine learning."
-- "Distinguish between classifiers and regression models."
+- "Distinguish between classification and regression models."
 - "Describe the specific methods that this lesson will focus on."
 keypoints:
 - "There are many types of machine learning."
