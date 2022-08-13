@@ -121,7 +121,7 @@ rpart.plot(treeModel, extra = 2)
 
 <img src="../fig/rmd-03-unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" width="612" style="display: block; margin: auto;" />
 
-Notice that we obtain a simpler tree using the testing set instead of the full data set.
+Notice that we obtain a simpler tree using the training set instead of the full data set.
 
 > ## Challenge: Training set accuracy
 >
