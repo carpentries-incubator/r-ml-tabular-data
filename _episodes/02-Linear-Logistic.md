@@ -116,10 +116,12 @@ F-statistic: 10.47 on 1 and 59 DF,  p-value: 0.001988
 
 The predicted `Start` is obtained by multiplying `Number` by the regression slope -1.2041 and adding the intercept 16.4268.
 
-> ## Challenge: Make a prediction
+> ## Challenge: Make a prediction and plot the regression line
 >
-> Predict the starting vertebra when the number of
-> vertebrae involved is 3.
+> 1. Predict the starting vertebra when the number of
+>    vertebrae involved is 3.
+> 2. Add the term `geom_smooth(method = "lm")` to the scatterplot 
+>    in the previous episode to obtain a plot of the regression line.
 >
 > > ## Solution
 > > 
@@ -127,6 +129,17 @@ The predicted `Start` is obtained by multiplying `Number` by the regression slop
 > > 16.4268 
 > > is approximately 
 > > 12.81.
+> > 
+> > 
+> > ~~~
+> > library(ggplot2) # don't need this line if tidyverse is already loaded
+> > ggplot(kyphosis, aes(x = Number, y = Start)) + 
+> >   geom_point() + 
+> >   geom_smooth(method = "lm")
+> > ~~~
+> > {: .language-r}
+> > 
+> > <img src="../fig/rmd-02-unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" width="612" style="display: block; margin: auto;" />
 > > 
 > {: .solution}
 {: .challenge}
