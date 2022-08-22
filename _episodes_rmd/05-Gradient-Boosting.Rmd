@@ -183,6 +183,22 @@ redwineXGB$evaluation_log %>%
 
 Notice that beyond iteration 40 or so, the training RMSE continues to decrease while the testing RMSE has basically stabilized. This divergence indicates that the later training iterations are improving the model based on the particularities of the training set, but in a way that does not generalize to the testing set.
 
+## Saving a trained model
+
+As models become more complicated, the time it takes to train them becomes nontrivial. For this reason, it can be helpful to save a trained XGBoost model. We'll create a directory in our project called `saved_models` and save our XGBoost model in a universal binary format that can be read by any XGBoost interface (e.g., R, Python, Julia, Scala).
+
+```{r, eval = FALSE}
+dir.create(here("saved_models"))
+xgb.save(redwineXGB, here("saved_models", "redwine.model"))
+```
+
+This trained model can be loaded into a future R session with the `xgb.load` command. 
+
+```{r, eval = FALSE}
+reloaded_model <- xgb.load(here("saved_models", "redwine.model"))
+```
+
+However, while `reloaded_model` can be used with the `predict` function, it is not identical to the `redwineXGB` object. For reproducibility, it is important to save the source code used in the training process.
 
 > ## Challenge: White Wine
 >

@@ -215,6 +215,14 @@ rwtree <- rpart(quality ~ ., data = trainDF, method = "anova")
 rpart.plot(rwtree)
 ```
 
+The `rpart.plot` command rounds off numerical values to save space. To see more digits of accuracy, print the tree in text format.
+
+```{r}
+rwtree
+```
+
+For example, the first split tests whether `alcohol < 10.525`, not 11 as shown in the plot of the tree.
+
 > ## Challenge: Check the Splits
 >
 > In the above decision tree, consider the root (5.6), its left child (5.4),
@@ -230,20 +238,20 @@ rpart.plot(rwtree)
 > > mean(trainDF$quality)
 > > ```
 > > 
-> > The left child of the root contains observations where `alcohol` is less than 11.
+> > The left child of the root contains observations where `alcohol` is less than 10.525.
 > > 
 > > ```{r}
 > > trainDF %>% 
-> >   filter(alcohol < 11) %>% 
+> >   filter(alcohol < 10.525) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ```
 > > 
-> > The leftmost leaf contains observations where `alcohol` is less than 11 and
-> > `sulphates` is less than 0.58. 
+> > The leftmost leaf contains observations where `alcohol` is less than 10.525 and
+> > `sulphates` is less than 0.575. 
 > > 
 > > ```{r}
 > > trainDF %>% 
-> >   filter(alcohol < 11, sulphates < 0.58) %>% 
+> >   filter(alcohol < 10.525, sulphates < 0.575) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ```
 > > 
