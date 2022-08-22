@@ -120,8 +120,10 @@ The predicted `Start` is obtained by multiplying `Number` by the regression slop
 >
 > 1. Predict the starting vertebra when the number of
 >    vertebrae involved is 3.
-> 2. Add the term `geom_smooth(method = "lm")` to the scatterplot 
->    in the previous episode to obtain a plot of the regression line.
+> 2. Adding the term `geom_smooth(method = "lm")` to a scatterplot 
+>    will produce a plot of the regression line. Modify the `ggplot`
+>    code from the previous episode to create a scatterplot of the
+>    training data, along with a regression line.
 >
 > > ## Solution
 > > 
@@ -133,7 +135,7 @@ The predicted `Start` is obtained by multiplying `Number` by the regression slop
 > > 
 > > ~~~
 > > library(ggplot2) # don't need this line if tidyverse is already loaded
-> > ggplot(kyphosis, aes(x = Number, y = Start)) + 
+> > ggplot(trainDF, aes(x = Number, y = Start)) + 
 > >   geom_point() + 
 > >   geom_smooth(method = "lm")
 > > ~~~

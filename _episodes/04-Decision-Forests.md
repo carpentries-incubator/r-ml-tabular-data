@@ -381,6 +381,46 @@ rpart.plot(rwtree)
 
 <img src="../fig/rmd-04-unnamed-chunk-16-1.png" title="plot of chunk unnamed-chunk-16" alt="plot of chunk unnamed-chunk-16" width="612" style="display: block; margin: auto;" />
 
+The `rpart.plot` command rounds off numerical values to save space. To see more digits of accuracy, print the tree in text format.
+
+
+~~~
+rwtree
+~~~
+{: .language-r}
+
+
+
+~~~
+n= 1279 
+
+node), split, n, deviance, yval
+      * denotes terminal node
+
+ 1) root 1279 827.94210 5.636435  
+   2) alcohol< 10.525 787 332.33800 5.364676  
+     4) sulphates< 0.575 310 100.56770 5.154839 *
+     5) sulphates>=0.575 477 209.24950 5.501048  
+      10) volatile.acidity>=0.405 364 149.63460 5.403846  
+        20) alcohol< 9.85 223  66.76233 5.278027 *
+        21) alcohol>=9.85 141  73.75887 5.602837 *
+      11) volatile.acidity< 0.405 113  45.09735 5.814159 *
+   3) alcohol>=10.525 492 344.51020 6.071138  
+     6) volatile.acidity>=0.8725 26  23.11538 4.730769  
+      12) volatile.acidity>=1.015 10   6.00000 4.000000 *
+      13) volatile.acidity< 1.015 16   8.43750 5.187500 *
+     7) volatile.acidity< 0.8725 466 272.07730 6.145923  
+      14) sulphates< 0.635 184  95.77717 5.831522  
+        28) alcohol< 11.65 102  53.84314 5.627451 *
+        29) alcohol>=11.65 82  32.40244 6.085366 *
+      15) sulphates>=0.635 282 146.24470 6.351064  
+        30) alcohol< 11.55 166  79.81325 6.138554 *
+        31) alcohol>=11.55 116  48.20690 6.655172 *
+~~~
+{: .output}
+
+For example, the first split tests whether `alcohol < 10.525`, not 11 as shown in the plot of the tree.
+
 > ## Challenge: Check the Splits
 >
 > In the above decision tree, consider the root (5.6), its left child (5.4),
@@ -405,12 +445,12 @@ rpart.plot(rwtree)
 > > ~~~
 > > {: .output}
 > > 
-> > The left child of the root contains observations where `alcohol` is less than 11.
+> > The left child of the root contains observations where `alcohol` is less than 10.525.
 > > 
 > > 
 > > ~~~
 > > trainDF %>% 
-> >   filter(alcohol < 11) %>% 
+> >   filter(alcohol < 10.525) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ~~~
 > > {: .language-r}
@@ -421,17 +461,17 @@ rpart.plot(rwtree)
 > > # A tibble: 1 × 1
 > >   nodeValue
 > >       <dbl>
-> > 1      5.42
+> > 1      5.36
 > > ~~~
 > > {: .output}
 > > 
-> > The leftmost leaf contains observations where `alcohol` is less than 11 and
-> > `sulphates` is less than 0.58. 
+> > The leftmost leaf contains observations where `alcohol` is less than 10.525 and
+> > `sulphates` is less than 0.575. 
 > > 
 > > 
 > > ~~~
 > > trainDF %>% 
-> >   filter(alcohol < 11, sulphates < 0.58) %>% 
+> >   filter(alcohol < 10.525, sulphates < 0.575) %>% 
 > >   summarize(nodeValue = mean(quality))
 > > ~~~
 > > {: .language-r}
@@ -442,7 +482,7 @@ rpart.plot(rwtree)
 > > # A tibble: 1 × 1
 > >   nodeValue
 > >       <dbl>
-> > 1      5.16
+> > 1      5.15
 > > ~~~
 > > {: .output}
 > > 
