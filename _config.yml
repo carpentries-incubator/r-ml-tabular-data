@@ -8,7 +8,7 @@
 # lc: Library Carpentry
 # cp: Carpentries (to use for instructor traning for instance)
 # incubator: Carpentries Incubator
-carpentry: "dc"
+carpentry: "incubator"
 
 # Overall title for pages.
 title: "Machine Learning for Tabular Data in R"
@@ -101,3 +101,5 @@ exclude:
 
 # Turn on built-in syntax highlighting.
 highlighter: rouge
+
+remote_theme: carpentries/carpentries-theme
